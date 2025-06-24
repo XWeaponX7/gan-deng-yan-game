@@ -13,6 +13,7 @@ export interface UseSocketReturn {
   gameState: GameState | null;
   playerId: string;
   error: string;
+  isJoining: boolean;
   joinGame: (playerName: string) => void;
   playCards: (cards: Card[], type: CardType) => void;
   pass: () => void;
@@ -24,6 +25,7 @@ export const useSocket = (): UseSocketReturn => {
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [playerId, setPlayerId] = useState<string>('');
   const [error, setError] = useState<string>('');
+  const [isJoining, setIsJoining] = useState(false);
   const gameIdRef = useRef<string>('');
 
   useEffect(() => {
@@ -40,6 +42,11 @@ export const useSocket = (): UseSocketReturn => {
       setIsConnected(true);
       setPlayerId(newSocket.id || '');
       setError('');
+      
+      // 连接成功后立即请求游戏状态（如果已经在游戏中）
+      setTimeout(() => {
+        newSocket.emit('get-game-state');
+      }, 100);
     });
 
     newSocket.on('disconnect', () => {
@@ -56,6 +63,7 @@ export const useSocket = (): UseSocketReturn => {
     }) => {
       console.log('加入游戏成功:', data);
       gameIdRef.current = data.gameId;
+      setIsJoining(false);
       setError('');
     });
 
@@ -80,6 +88,7 @@ export const useSocket = (): UseSocketReturn => {
     newSocket.on('error', (data: { message: string }) => {
       console.error('游戏错误:', data.message);
       setError(data.message);
+      setIsJoining(false);
     });
 
     newSocket.on('connect_error', (error) => {
@@ -97,11 +106,19 @@ export const useSocket = (): UseSocketReturn => {
   // 加入游戏
   const joinGame = (playerName: string) => {
     if (!socket || !isConnected) {
+      console.error('无法加入游戏: socket =', socket, 'isConnected =', isConnected);
       setError('未连接到服务器');
       return;
     }
 
-    console.log('尝试加入游戏:', playerName);
+    if (isJoining) {
+      console.log('已经在加入游戏中，忽略重复请求');
+      return;
+    }
+
+    console.log('尝试加入游戏:', playerName, 'socketId:', socket.id);
+    setIsJoining(true);
+    setError('');
     socket.emit('join-game', { playerName });
   };
 
@@ -147,6 +164,7 @@ export const useSocket = (): UseSocketReturn => {
     gameState,
     playerId,
     error,
+    isJoining,
     joinGame,
     playCards,
     pass

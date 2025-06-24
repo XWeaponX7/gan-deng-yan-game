@@ -1,7 +1,7 @@
 // client/src/components/GameBoard.tsx
-// 游戏主界面组件
+// 游戏主界面组件 - UI优化版本
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { GameState, Card, CardType } from '../types/game';
 import { ClientCardUtils } from '../utils/cardUtils';
 
@@ -20,21 +20,129 @@ const GameBoard: React.FC<GameBoardProps> = ({
 }) => {
   const [selectedCards, setSelectedCards] = useState<Card[]>([]);
 
+  // 提前定义所有hooks，避免条件渲染问题
+  const currentPlayer = gameState?.players.find(p => p.id === playerId);
+  const opponent = gameState?.players.find(p => p.id !== playerId);
+  const isMyTurn = gameState?.players[gameState.currentPlayerIndex]?.id === playerId;
+
+  // 选择/取消选择卡牌
+  const toggleCardSelection = useCallback((card: Card) => {
+    setSelectedCards(prev => {
+      const isSelected = prev.find(c => c.id === card.id);
+      if (isSelected) {
+        return prev.filter(c => c.id !== card.id);
+      } else {
+        return [...prev, card];
+      }
+    });
+  }, []);
+
+  // 出牌
+  const handlePlayCards = useCallback(() => {
+    if (selectedCards.length === 0) return;
+    onPlayCards(selectedCards);
+    setSelectedCards([]);
+  }, [selectedCards, onPlayCards]);
+
+  // 全选同点数牌
+  const selectSameRankCards = useCallback((targetCard: Card) => {
+    if (!currentPlayer?.cards) return;
+    
+    const sameRankCards = currentPlayer.cards.filter(card => 
+      card.rank === targetCard.rank && !selectedCards.some(selected => selected.id === card.id)
+    );
+    
+    setSelectedCards(prev => [...prev, ...sameRankCards]);
+  }, [currentPlayer?.cards, selectedCards]);
+
+  // 键盘快捷键支持
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      // 只在轮到玩家时响应键盘事件
+      if (!isMyTurn || gameState?.phase !== 'playing') return;
+
+      switch (event.key.toLowerCase()) {
+        case 'enter':
+        case ' ':
+          // 空格键或回车键出牌
+          event.preventDefault();
+          if (selectedCards.length > 0) {
+            handlePlayCards();
+          }
+          break;
+        case 'escape':
+          // ESC键清空选择
+          event.preventDefault();
+          setSelectedCards([]);
+          break;
+        case 'p':
+          // P键过牌
+          event.preventDefault();
+          if (gameState?.lastPlay) {
+            onPass();
+          }
+          break;
+        case 'a':
+          // A键全选（仅在没有选中卡牌时）
+          event.preventDefault();
+          if (selectedCards.length === 0 && currentPlayer?.cards) {
+            setSelectedCards([...currentPlayer.cards]);
+          } else {
+            setSelectedCards([]);
+          }
+          break;
+        default:
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => {
+      window.removeEventListener('keydown', handleKeyPress);
+    };
+  }, [isMyTurn, gameState?.phase, gameState?.lastPlay, selectedCards, handlePlayCards, onPass, currentPlayer?.cards]);
+
   // 如果没有游戏状态，显示等待界面
   if (!gameState) {
+    console.log('GameBoard: 等待游戏状态, playerId:', playerId);
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center text-white">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-          <p className="text-xl">正在匹配对手...</p>
+      <div className="game-background min-h-screen flex items-center justify-center">
+        <div className="glass-panel p-8 text-center max-w-md">
+          <div className="loading-spinner h-16 w-16 mx-auto mb-6"></div>
+          <h2 className="text-2xl font-bold text-white mb-2">🎮 干瞪眼对战</h2>
+          <p className="text-lg text-white/90 mb-2">正在连接游戏...</p>
+          <p className="text-sm text-white/70 mb-4">请稍候，正在建立连接</p>
+          
+          {/* 连接状态信息 */}
+          <div className="bg-white/10 backdrop-blur rounded-lg p-4 border border-white/20">
+            <p className="text-xs text-white/60 mb-2">连接状态</p>
+            <div className="space-y-1">
+              <div className="flex justify-between text-sm">
+                <span className="text-white/70">玩家ID:</span>
+                <span className="text-white font-mono">{playerId || '连接中...'}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-white/70">游戏状态:</span>
+                <span className="text-yellow-400">等待中</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="mt-4 space-y-2">
+            <button
+              onClick={() => window.location.reload()}
+              className="btn-enhanced btn-primary text-sm px-4 py-2"
+            >
+              🔄 刷新重试
+            </button>
+            <p className="text-xs text-white/50">
+              💡 如果长时间无响应，点击刷新重试
+            </p>
+          </div>
         </div>
       </div>
     );
   }
-
-  const currentPlayer = gameState.players.find(p => p.id === playerId);
-  const opponent = gameState.players.find(p => p.id !== playerId);
-  const isMyTurn = gameState.players[gameState.currentPlayerIndex]?.id === playerId;
 
   console.log('GameBoard render:', {
     playerId,
@@ -49,114 +157,178 @@ const GameBoard: React.FC<GameBoardProps> = ({
     }
   });
 
-  // 选择/取消选择卡牌
-  const toggleCardSelection = (card: Card) => {
-    setSelectedCards(prev => {
-      const isSelected = prev.find(c => c.id === card.id);
-      if (isSelected) {
-        return prev.filter(c => c.id !== card.id);
-      } else {
-        return [...prev, card];
-      }
-    });
-  };
-
-  // 出牌
-  const handlePlayCards = () => {
-    if (selectedCards.length === 0) return;
-    onPlayCards(selectedCards);
-    setSelectedCards([]);
-  };
-
-  // 渲染卡牌
+  // 渲染卡牌 - 增强版本
   const renderCard = (card: Card, isSelected: boolean, onClick?: () => void) => {
+    // 双击选择同点数牌
+    const handleDoubleClick = (event: React.MouseEvent) => {
+      event.preventDefault();
+      if (onClick) {
+        selectSameRankCards(card);
+      }
+    };
     const getCardColor = (card: Card) => {
-      if (card.suit === 'joker') return 'text-purple-600';
-      if (card.suit === 'hearts' || card.suit === 'diamonds') return 'text-red-600';
-      return 'text-black';
+      if (card.suit === 'joker') return 'text-purple-700 font-extrabold';
+      if (card.suit === 'hearts' || card.suit === 'diamonds') return 'text-red-600 font-bold';
+      return 'text-gray-800 font-semibold';
     };
 
     const isSpecial = ClientCardUtils.isSpecialCard(card);
+    const isNumber2 = card.rank === '2';
+    const cardType = ClientCardUtils.identifyCardType([card]);
+    const isBomb = cardType ? ClientCardUtils.isBomb(cardType) : false;
 
-    return (
-      <div
-        key={card.id}
-        onClick={onClick}
-        className={`
-          relative w-12 h-16 bg-white rounded border-2 flex items-center justify-center
-          text-xs font-bold cursor-pointer transition-all
-          ${isSelected ? 'border-blue-500 -translate-y-2 shadow-lg' : 
-            isSpecial ? 'border-orange-400 hover:border-orange-600' : 
-            'border-gray-300 hover:border-gray-400'}
-          ${getCardColor(card)}
-          ${isSpecial ? 'bg-gradient-to-br from-yellow-50 to-orange-50' : 'bg-white'}
-        `}
-      >
-        {card.display}
-        {/* 特殊牌标识 */}
+    // 确定卡牌样式类
+    const getCardClasses = () => {
+      let classes = `card-3d relative w-14 h-20 flex items-center justify-center text-sm font-bold transition-all duration-300 `;
+      
+      if (isSelected) {
+        classes += 'selected ';
+      }
+      if (isSpecial) {
+        classes += 'special ';
+      }
+      if (isBomb) {
+        classes += 'bomb ';
+      }
+      if (isNumber2) {
+        classes += 'number-two ';
+      }
+      
+      classes += getCardColor(card);
+      return classes;
+    };
+
+          return (
+        <div
+          key={card.id}
+          onClick={onClick}
+          onDoubleClick={handleDoubleClick}
+          className={getCardClasses()}
+          style={{
+            animationDelay: `${Math.random() * 0.5}s`
+          }}
+          title={`${card.display} - 单击选择，双击选择所有${card.rank}`}
+        >
+        <span className="relative z-10 drop-shadow-sm">
+          {card.display}
+        </span>
+        
+        {/* 特殊牌星星标识 */}
         {isSpecial && (
-          <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
-            <span className="text-white text-xs">★</span>
+          <div className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg">
+            <span className="text-white text-xs font-bold">★</span>
           </div>
         )}
-        {/* 数字2的特殊标识 */}
-        {card.rank === '2' && (
-          <div className="absolute -bottom-1 -left-1 w-3 h-3 bg-orange-500 rounded-full flex items-center justify-center">
+        
+        {/* 数字2的火焰标识 */}
+        {isNumber2 && (
+          <div className="absolute -bottom-1 -left-1 w-4 h-4 bg-gradient-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center shadow-md">
             <span className="text-white text-xs">🔥</span>
           </div>
         )}
+
+        {/* 炸弹特效 */}
+        {isBomb && !isSpecial && (
+          <div className="absolute -top-1 -left-1 w-4 h-4 bg-gradient-to-br from-red-500 to-red-700 rounded-full flex items-center justify-center shadow-md">
+            <span className="text-white text-xs">💥</span>
+          </div>
+        )}
+
+        {/* 卡牌光泽效果 */}
+        <div className="absolute inset-0 bg-gradient-to-br from-white/30 via-transparent to-transparent rounded-xl pointer-events-none"></div>
       </div>
     );
   };
 
   return (
-    <div className="min-h-screen p-4">
+    <div className="game-background min-h-screen p-4">
       {/* 游戏状态栏 */}
-      <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 mb-4">
+      <div className="glass-panel p-6 mb-6">
         <div className="flex justify-between items-center text-white">
           <div>
-            <h2 className="text-xl font-bold">干瞪眼对战</h2>
-            <p className="text-sm opacity-80">游戏ID: {gameState.gameId}</p>
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent drop-shadow-lg">
+              🃏 干瞪眼对战
+            </h2>
+            <p className="text-sm opacity-80 mt-1">游戏ID: <span className="font-mono bg-white/20 px-2 py-1 rounded">{gameState.gameId}</span></p>
             {gameState.deckCount !== undefined && (
-              <p className="text-xs opacity-60">剩余牌堆: {gameState.deckCount}</p>
+              <p className="text-xs opacity-60 mt-1">
+                📚 剩余牌堆: <span className="font-bold text-cyan-300">{gameState.deckCount}</span>
+              </p>
             )}
           </div>
           <div className="text-right">
-            <p className="text-sm">
-              {gameState.phase === 'waiting' && '等待开始'}
-              {gameState.phase === 'playing' && (isMyTurn ? '轮到你了' : '对手回合')}
-              {gameState.phase === 'finished' && '游戏结束'}
-            </p>
-            {gameState.winner && (
-              <p className="text-lg font-bold">
-                🎉 {gameState.winner === playerId ? '你赢了!' : '对手获胜'}
+            <div className={`px-4 py-2 rounded-full border-2 transition-all ${
+              gameState.phase === 'waiting' ? 'border-yellow-400 bg-yellow-500/20' :
+              gameState.phase === 'playing' ? (isMyTurn ? 'border-green-400 bg-green-500/20 animate-pulse' : 'border-blue-400 bg-blue-500/20') :
+              'border-purple-400 bg-purple-500/20'
+            }`}>
+              <p className="text-sm font-semibold">
+                {gameState.phase === 'waiting' && '⏳ 等待开始'}
+                {gameState.phase === 'playing' && (isMyTurn ? '🎯 轮到你了' : '⏸️ 对手回合')}
+                {gameState.phase === 'finished' && '🏁 游戏结束'}
               </p>
+            </div>
+            {gameState.winner && (
+              <div className="mt-3 p-3 rounded-lg bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-400/50">
+                <p className="text-lg font-bold animate-bounce">
+                  {gameState.winner === playerId ? '🏆 恭喜你赢了!' : '😅 对手获胜'}
+                </p>
+                <p className="text-xs text-white/70 mt-1">
+                  {gameState.winner === playerId ? '太棒了！' : '再接再厉！'}
+                </p>
+              </div>
             )}
           </div>
         </div>
       </div>
 
       {/* 对手信息区域 */}
-      <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 mb-4">
-        <h3 className="text-white font-bold mb-2">对手: {opponent?.name || '等待中'}</h3>
-        <div className="flex gap-1">
-          {Array.from({ length: opponent?.cardCount || 0 }, (_, i) => (
-            <div
-              key={i}
-              className="w-8 h-12 bg-blue-600 rounded border border-blue-400"
-              title={`对手剩余 ${opponent?.cardCount} 张牌`}
-            />
-          ))}
+      <div className="glass-panel p-5 mb-6">
+        <div className="flex justify-between items-center mb-3">
+          <h3 className="text-white font-bold">
+            👤 对手: {opponent?.name || (
+              <span className="text-yellow-400 animate-pulse">等待中...</span>
+            )}
+          </h3>
+          {opponent && (
+            <div className="text-right">
+              <p className="text-white/80 text-sm">
+                剩余 <span className="font-bold text-red-300">{opponent.cardCount}</span> 张牌
+              </p>
+              {opponent.cardCount <= 3 && opponent.cardCount > 0 && (
+                <p className="text-red-400 text-xs font-bold animate-pulse">
+                  🚨 对手即将获胜！
+                </p>
+              )}
+            </div>
+          )}
         </div>
-        {opponent && (
-          <p className="text-white text-sm mt-2">
-            剩余 {opponent.cardCount} 张牌
-          </p>
-        )}
+        
+        <div className="flex flex-wrap gap-2 min-h-16 p-3 bg-white/5 backdrop-blur rounded-lg border border-white/10">
+          {opponent ? (
+            Array.from({ length: opponent.cardCount }, (_, i) => (
+              <div
+                key={i}
+                className="w-10 h-14 bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg border border-blue-400/50 shadow-lg card-3d"
+                style={{
+                  animationDelay: `${i * 0.05}s`,
+                  transform: `rotate(${(Math.random() - 0.5) * 10}deg)`
+                }}
+                title={`对手剩余 ${opponent.cardCount} 张牌`}
+              >
+                <div className="w-full h-full bg-gradient-to-br from-white/20 via-transparent to-transparent rounded-lg"></div>
+              </div>
+            ))
+          ) : (
+            <div className="w-full h-14 flex items-center justify-center">
+              <p className="text-white/60 text-sm">🔍 寻找对手中...</p>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* 出牌区域 */}
-      <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 mb-4 min-h-32">
+      <div className="glass-panel p-5 mb-6 min-h-36">
         <h3 className="text-white font-bold mb-2">上次出牌</h3>
         {gameState.lastPlay ? (
           <div>
@@ -197,25 +369,37 @@ const GameBoard: React.FC<GameBoardProps> = ({
 
       {/* 游戏控制按钮 */}
       {gameState.phase === 'playing' && isMyTurn && (
-        <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 mb-4">
+        <div className="glass-panel p-5 mb-6">
           <div className="flex gap-2">
             <button
               onClick={handlePlayCards}
               disabled={selectedCards.length === 0}
-              className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-500 text-white rounded font-medium transition-colors"
+              className={`btn-enhanced ${selectedCards.length === 0 ? 'btn-disabled' : 'btn-primary'}`}
             >
-              出牌 ({selectedCards.length})
+              🚀 出牌 ({selectedCards.length})
             </button>
             <button
               onClick={onPass}
               disabled={!gameState.lastPlay}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-500 text-white rounded font-medium transition-colors"
+              className={`btn-enhanced ${!gameState.lastPlay ? 'btn-disabled' : 'btn-danger'}`}
             >
-              过牌
+              ⏭️ 过牌
             </button>
           </div>
+          
+          {/* 快捷键提示 */}
+          <div className="mt-4 p-3 bg-white/5 backdrop-blur rounded-lg border border-white/10">
+            <p className="text-white/60 text-xs mb-2">⌨️ 快捷键</p>
+            <div className="grid grid-cols-2 gap-2 text-xs text-white/70">
+              <div>🚀 <kbd className="bg-white/20 px-1 rounded">Space/Enter</kbd> 出牌</div>
+              <div>⏭️ <kbd className="bg-white/20 px-1 rounded">P</kbd> 过牌</div>
+              <div>🔄 <kbd className="bg-white/20 px-1 rounded">A</kbd> 全选/取消</div>
+              <div>❌ <kbd className="bg-white/20 px-1 rounded">ESC</kbd> 清空选择</div>
+            </div>
+          </div>
+
           {selectedCards.length > 0 && (
-            <div className="text-white text-sm mt-2">
+            <div className="text-white text-sm mt-4">
               <p>已选择: {selectedCards.map(c => c.display).join(', ')}</p>
               {(() => {
                 const cardType = ClientCardUtils.identifyCardType(selectedCards);
@@ -274,11 +458,24 @@ const GameBoard: React.FC<GameBoardProps> = ({
       )}
 
       {/* 我的手牌 */}
-      <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-        <h3 className="text-white font-bold mb-2">我的手牌: {currentPlayer?.name}</h3>
-        <div className="flex flex-wrap gap-1">
+      <div className="glass-panel p-5">
+        <div className="flex justify-between items-center mb-3">
+          <h3 className="text-white font-bold">🎲 我的手牌: {currentPlayer?.name}</h3>
+          <div className="text-right">
+            <p className="text-white/80 text-sm">
+              剩余 {currentPlayer?.cards?.length || 0} 张牌
+            </p>
+            {currentPlayer?.cards && currentPlayer.cards.length <= 3 && currentPlayer.cards.length > 0 && (
+              <p className="text-yellow-400 text-xs font-bold animate-pulse">
+                ⚠️ 警报！剩余牌数过少
+              </p>
+            )}
+          </div>
+        </div>
+        
+        <div className="flex flex-wrap gap-2 min-h-24 p-3 bg-white/5 backdrop-blur rounded-lg border border-white/10">
           {currentPlayer?.cards && currentPlayer.cards.length > 0 ? (
-            currentPlayer.cards.map(card => 
+            currentPlayer.cards.map((card, index) => 
               renderCard(
                 card, 
                 selectedCards.some(c => c.id === card.id),
@@ -287,14 +484,24 @@ const GameBoard: React.FC<GameBoardProps> = ({
               )
             )
           ) : (
-            <p className="text-white/60 text-sm">
-              {gameState.phase === 'waiting' ? '等待发牌...' : '无手牌'}
-            </p>
+            <div className="w-full h-20 flex items-center justify-center">
+              <p className="text-white/60 text-sm">
+                {gameState.phase === 'waiting' ? (
+                  <span>🃏 等待发牌...</span>
+                ) : (
+                  <span>🎉 恭喜！所有手牌已出完</span>
+                )}
+              </p>
+            </div>
           )}
         </div>
-        <p className="text-white text-sm mt-2">
-          剩余 {currentPlayer?.cards?.length || 0} 张牌
-        </p>
+        
+        {/* 手牌提示 */}
+        {isMyTurn && currentPlayer?.cards && currentPlayer.cards.length > 0 && (
+          <div className="mt-3 text-xs text-white/60">
+            💡 提示：单击选择卡牌，双击选择所有相同点数的牌
+          </div>
+        )}
       </div>
     </div>
   );

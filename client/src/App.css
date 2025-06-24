@@ -1,11 +1,13 @@
 /* client/src/App.css */
-/* 干瞪眼游戏基础样式 */
+/* 干瞪眼游戏增强样式 - UI优化版本 */
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* 全局样式 */
+/* ===================
+   全局样式和基础设置
+   =================== */
 * {
   box-sizing: border-box;
 }
@@ -18,45 +20,365 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden; /* 防止横向滚动 */
 }
 
-/* 卡牌动画 */
-.card-enter {
-  opacity: 0;
-  transform: translateY(20px);
+/* ===================
+   动态渐变背景
+   =================== */
+.game-background {
+  background: linear-gradient(-45deg, #667eea, #764ba2, #6B73FF, #9575CD);
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
+  min-height: 100vh;
 }
 
-.card-enter-active {
-  opacity: 1;
-  transform: translateY(0);
-  transition: opacity 300ms, transform 300ms;
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
-.card-exit {
-  opacity: 1;
+/* ===================
+   卡牌动画系统
+   =================== */
+
+/* 卡牌发牌动画 */
+@keyframes cardDeal {
+  from { 
+    transform: translateY(-100px) rotateY(180deg) scale(0.8);
+    opacity: 0;
+  }
+  to { 
+    transform: translateY(0) rotateY(0deg) scale(1);
+    opacity: 1;
+  }
 }
 
-.card-exit-active {
-  opacity: 0;
-  transform: translateY(-20px);
-  transition: opacity 300ms, transform 300ms;
+/* 卡牌选中动画 */
+@keyframes cardSelect {
+  0% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-8px) scale(1.05); }
+  100% { transform: translateY(-15px) scale(1); }
 }
 
-/* 自定义滚动条 */
+/* 卡牌出牌动画 */
+@keyframes cardPlay {
+  0% { 
+    transform: translateY(0) scale(1) rotateZ(0deg);
+    opacity: 1;
+  }
+  50% { 
+    transform: translateY(-30px) scale(1.1) rotateZ(5deg);
+    opacity: 0.8;
+  }
+  100% { 
+    transform: translateY(-80px) scale(0.7) rotateZ(10deg);
+    opacity: 0;
+  }
+}
+
+/* 特殊牌发光效果 */
+@keyframes specialCardGlow {
+  0%, 100% { 
+    box-shadow: 0 0 5px rgba(255, 215, 0, 0.3), 
+                0 0 10px rgba(255, 215, 0, 0.2),
+                0 0 15px rgba(255, 215, 0, 0.1);
+  }
+  50% { 
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.6), 
+                0 0 20px rgba(255, 215, 0, 0.4),
+                0 0 30px rgba(255, 215, 0, 0.2);
+  }
+}
+
+/* 炸弹牌闪烁效果 */
+@keyframes bombPulse {
+  0%, 100% { 
+    box-shadow: 0 0 5px rgba(255, 69, 0, 0.4), 
+                0 0 10px rgba(255, 69, 0, 0.3);
+  }
+  50% { 
+    box-shadow: 0 0 15px rgba(255, 69, 0, 0.8), 
+                0 0 25px rgba(255, 69, 0, 0.6);
+  }
+}
+
+/* ===================
+   卡牌3D样式
+   =================== */
+.card-3d {
+  transform-style: preserve-3d;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 12px;
+  box-shadow: 
+    0 4px 15px rgba(0, 0, 0, 0.1),
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  position: relative;
+  cursor: pointer;
+  backface-visibility: hidden;
+}
+
+.card-3d:hover {
+  transform: translateY(-8px) rotateX(8deg) scale(1.05);
+  box-shadow: 
+    0 15px 35px rgba(0, 0, 0, 0.15),
+    0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.card-3d.selected {
+  animation: cardSelect 0.3s ease-out;
+  transform: translateY(-15px) scale(1.02);
+  box-shadow: 
+    0 20px 40px rgba(59, 130, 246, 0.3),
+    0 10px 25px rgba(59, 130, 246, 0.2);
+  border: 2px solid #3B82F6;
+}
+
+/* 特殊牌样式 */
+.card-3d.special {
+  background: linear-gradient(135deg, #FEF3C7, #FCD34D, #F59E0B);
+  animation: specialCardGlow 2s ease-in-out infinite;
+  border: 2px solid #F59E0B;
+}
+
+.card-3d.bomb {
+  background: linear-gradient(135deg, #FEE2E2, #FECACA, #F87171);
+  animation: bombPulse 1.5s ease-in-out infinite;
+  border: 2px solid #EF4444;
+}
+
+/* 数字2的特殊样式 */
+.card-3d.number-two {
+  background: linear-gradient(135deg, #FED7AA, #FB923C, #EA580C);
+  box-shadow: 
+    0 4px 15px rgba(234, 88, 12, 0.2),
+    0 2px 8px rgba(234, 88, 12, 0.1);
+}
+
+/* ===================
+   毛玻璃面板效果
+   =================== */
+.glass-panel {
+  backdrop-filter: blur(20px) saturate(180%);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.glass-panel:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+/* 深色毛玻璃面板 */
+.glass-panel-dark {
+  backdrop-filter: blur(20px) saturate(180%);
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* ===================
+   按钮增强样式
+   =================== */
+.btn-enhanced {
+  position: relative;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  transform: translateZ(0);
+}
+
+.btn-enhanced::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.btn-enhanced:hover::before {
+  left: 100%;
+}
+
+/* 主要按钮样式 */
+.btn-primary {
+  background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+  color: white;
+  border: none;
+  box-shadow: 
+    0 4px 15px rgba(59, 130, 246, 0.4),
+    0 2px 8px rgba(59, 130, 246, 0.2);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 
+    0 8px 25px rgba(59, 130, 246, 0.5),
+    0 4px 15px rgba(59, 130, 246, 0.3);
+}
+
+.btn-primary:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* 危险按钮样式 */
+.btn-danger {
+  background: linear-gradient(135deg, #EF4444, #DC2626);
+  color: white;
+  border: none;
+  box-shadow: 
+    0 4px 15px rgba(239, 68, 68, 0.4),
+    0 2px 8px rgba(239, 68, 68, 0.2);
+}
+
+.btn-danger:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 
+    0 8px 25px rgba(239, 68, 68, 0.5),
+    0 4px 15px rgba(239, 68, 68, 0.3);
+}
+
+/* 禁用按钮样式 */
+.btn-disabled {
+  background: rgba(107, 114, 128, 0.5);
+  color: rgba(255, 255, 255, 0.5);
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* ===================
+   通知和提示动画
+   =================== */
+@keyframes slideInFromTop {
+  from {
+    transform: translateY(-100px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutToTop {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-100px);
+    opacity: 0;
+  }
+}
+
+.notification {
+  animation: slideInFromTop 0.5s ease-out;
+}
+
+.notification.leaving {
+  animation: slideOutToTop 0.3s ease-in;
+}
+
+/* ===================
+   加载动画增强
+   =================== */
+@keyframes spinGlow {
+  0% {
+    transform: rotate(0deg);
+    box-shadow: 0 0 5px rgba(59, 130, 246, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.8);
+  }
+  100% {
+    transform: rotate(360deg);
+    box-shadow: 0 0 5px rgba(59, 130, 246, 0.5);
+  }
+}
+
+.loading-spinner {
+  animation: spinGlow 1s linear infinite;
+  border: 3px solid rgba(59, 130, 246, 0.3);
+  border-top: 3px solid #3B82F6;
+  border-radius: 50%;
+}
+
+/* ===================
+   自定义滚动条增强
+   =================== */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #888;
-  border-radius: 3px;
+  background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+  border-radius: 4px;
+  transition: all 0.3s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: linear-gradient(135deg, #2563EB, #1E40AF);
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+}
+
+/* ===================
+   响应式设计
+   =================== */
+@media (max-width: 768px) {
+  .card-3d {
+    border-radius: 8px;
+    transform: scale(0.9);
+  }
+  
+  .card-3d:hover {
+    transform: translateY(-5px) scale(0.95);
+  }
+  
+  .glass-panel {
+    border-radius: 12px;
+    margin: 8px;
+  }
+  
+  .btn-enhanced {
+    padding: 10px 20px;
+    border-radius: 10px;
+  }
+}
+
+/* ===================
+   无障碍性支持
+   =================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 } 

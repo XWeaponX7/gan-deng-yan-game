@@ -16,6 +16,7 @@ function App() {
     gameState,
     playerId,
     error,
+    isJoining,
     joinGame,
     playCards,
     pass
@@ -49,25 +50,25 @@ function App() {
 
   if (!isInGame) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-800 to-green-600 flex items-center justify-center">
-        <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full mx-4">
-          <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">
+      <div className="game-background min-h-screen flex items-center justify-center">
+        <div className="glass-panel p-8 max-w-md w-full mx-4">
+          <h1 className="text-3xl font-bold text-center text-white mb-6 drop-shadow-lg">
             🃏 干瞪眼
           </h1>
-          <p className="text-gray-600 text-center mb-6">
+          <p className="text-white/90 text-center mb-6 drop-shadow">
             两人实时对战卡牌游戏
           </p>
           
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-white/90 mb-2 drop-shadow">
                 玩家昵称
               </label>
               <input
                 type="text"
                 value={playerName}
                 onChange={(e) => setPlayerName(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full px-4 py-3 bg-white/20 backdrop-blur border border-white/30 rounded-xl text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all"
                 placeholder="输入你的昵称"
                 maxLength={20}
                 onKeyPress={(e) => e.key === 'Enter' && handleJoinGame()}
@@ -75,26 +76,27 @@ function App() {
             </div>
             
             {error && (
-              <div className="text-red-600 text-sm text-center">
-                {error}
+              <div className="text-red-400 text-sm text-center bg-red-500/20 backdrop-blur rounded-lg p-3 border border-red-400/30">
+                ⚠️ {error}
               </div>
             )}
             
             <button
               onClick={handleJoinGame}
-              disabled={!playerName.trim()}
-              className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-medium py-2 px-4 rounded-md transition-colors"
+              disabled={!playerName.trim() || isJoining}
+              className={`w-full btn-enhanced ${(!playerName.trim() || isJoining) ? 'btn-disabled' : 'btn-primary'}`}
             >
-              开始游戏
+              {isJoining ? '🔄 连接中...' : '🚀 开始游戏'}
             </button>
           </div>
           
-          <div className="mt-6 text-sm text-gray-500 text-center">
-            <p>游戏规则：</p>
-            <ul className="mt-2 space-y-1">
-              <li>• 第一个出完手牌的玩家获胜</li>
-              <li>• 支持单张和对子牌型</li>
-              <li>• 大小王是最大的牌</li>
+          <div className="mt-8 text-sm text-white/70 text-center">
+            <p className="font-semibold text-white/90 mb-3">🎯 游戏规则</p>
+            <ul className="space-y-2 text-left bg-white/10 backdrop-blur rounded-lg p-4 border border-white/20">
+              <li>🏆 第一个出完手牌的玩家获胜</li>
+              <li>🃏 支持单张、对子、顺子、炸弹等牌型</li>
+              <li>👑 大小王是最大的牌，可当百搭使用</li>
+              <li>🔥 数字2只能被大小王或炸弹压制</li>
             </ul>
           </div>
         </div>
@@ -102,15 +104,25 @@ function App() {
     );
   }
 
+  // 调试信息
+  console.log('App render:', {
+    isInGame,
+    gameState: gameState ? {
+      gameId: gameState.gameId,
+      phase: gameState.phase,
+      playerCount: gameState.players.length
+    } : null,
+    playerId,
+    error
+  });
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-800 to-green-600">
-      <GameBoard 
-        gameState={gameState}
-        playerId={playerId}
-        onPlayCards={handlePlayCards}
-        onPass={pass}
-      />
-    </div>
+    <GameBoard 
+      gameState={gameState}
+      playerId={playerId}
+      onPlayCards={handlePlayCards}
+      onPass={pass}
+    />
   );
 }
 

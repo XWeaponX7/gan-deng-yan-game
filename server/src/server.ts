@@ -70,6 +70,23 @@ function matchPlayer(playerId: string, playerName: string): Game | null {
 io.on('connection', (socket) => {
   console.log(`玩家连接: ${socket.id}`);
 
+  // 请求游戏状态
+  socket.on('get-game-state', () => {
+    const playerId = socket.id;
+    const gameId = playerToGame.get(playerId);
+    
+    if (gameId) {
+      const game = games.get(gameId);
+      if (game) {
+        console.log(`获取游戏状态 for ${playerId}:`, {
+          phase: game.phase,
+          players: game.players.map(p => ({ id: p.id, name: p.name, cardCount: p.cards.length }))
+        });
+        socket.emit('game-state', game.getGameState(playerId));
+      }
+    }
+  });
+
   // 加入游戏
   socket.on('join-game', (data: { playerName: string }) => {
     try {
@@ -94,9 +111,15 @@ io.on('connection', (socket) => {
         playerName
       });
 
-      // 为每个玩家发送包含自己手牌的游戏状态
+      // 立即发送游戏状态
+      console.log(`发送游戏状态给 ${playerName} (${playerId})`);
+      socket.emit('game-state', game.getGameState(playerId));
+
+      // 为其他玩家也发送更新的游戏状态
       game.players.forEach(player => {
-        io.to(player.id).emit('game-state', game.getGameState(player.id));
+        if (player.id !== playerId) {
+          io.to(player.id).emit('game-state', game.getGameState(player.id));
+        }
       });
 
       // 如果房间满了，自动开始游戏
