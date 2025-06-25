@@ -10,13 +10,15 @@ interface GameBoardProps {
   playerId: string;
   onPlayCards: (cards: Card[]) => void;
   onPass: () => void;
+  onRequestRematch: () => void; // 新增：请求再玩一次
 }
 
 const GameBoard: React.FC<GameBoardProps> = ({ 
   gameState, 
   playerId, 
   onPlayCards, 
-  onPass 
+  onPass,
+  onRequestRematch
 }) => {
   const [selectedCards, setSelectedCards] = useState<Card[]>([]);
 
@@ -179,7 +181,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
 
     // 确定卡牌样式类
     const getCardClasses = () => {
-      let classes = `card-3d relative w-14 h-20 flex items-center justify-center text-sm font-bold transition-all duration-300 `;
+      let classes = `card w-14 h-20 `;
       
       if (isSelected) {
         classes += 'selected ';
@@ -276,6 +278,51 @@ const GameBoard: React.FC<GameBoardProps> = ({
                 <p className="text-xs text-white/70 mt-1">
                   {gameState.winner === playerId ? '太棒了！' : '再接再厉！'}
                 </p>
+              </div>
+            )}
+            
+            {/* 再玩一次按钮 */}
+            {gameState.phase === 'finished' && (
+              <div className="mt-4 p-4 rounded-lg bg-gradient-to-r from-purple-500/20 to-blue-500/20 border border-purple-400/50">
+                <div className="flex flex-col items-center gap-3">
+                  <p className="text-white font-semibold">想要再来一局吗？</p>
+                  
+                  {/* 显示再玩一次状态 */}
+                  <div className="flex gap-2 text-xs text-white/70">
+                    {gameState.players.map(player => (
+                      <div key={player.id} className="flex items-center gap-1">
+                        <span>{player.name}:</span>
+                        {player.wantsRematch ? (
+                          <span className="text-green-400">✅ 同意</span>
+                        ) : (
+                          <span className="text-gray-400">⏳ 等待中</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {/* 再玩一次按钮 */}
+                  {!gameState.players.find(p => p.id === playerId)?.wantsRematch ? (
+                    <button
+                      onClick={onRequestRematch}
+                      className="btn-enhanced btn-primary text-sm px-6 py-2"
+                    >
+                      🔄 再玩一次
+                    </button>
+                  ) : (
+                    <div className="text-green-400 text-sm animate-pulse">
+                      ✅ 等待对手确认...
+                    </div>
+                  )}
+                  
+                  {/* 提示文字 */}
+                  <p className="text-xs text-white/50 text-center">
+                    {gameState.lastWinner ? 
+                      `💡 下一局由 ${gameState.players.find(p => p.id !== gameState.lastWinner)?.name || '上局输家'} 先出牌` :
+                      '💡 双方都同意后立即开始新游戏'
+                    }
+                  </p>
+                </div>
               </div>
             )}
           </div>

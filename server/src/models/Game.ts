@@ -8,6 +8,7 @@ export interface Player {
   name: string;
   cards: Card[];
   isReady: boolean;
+  wantsRematch?: boolean; // 是否想要再玩一次
 }
 
 export interface CardPlay {
@@ -26,6 +27,7 @@ export class Game {
   public lastPlay: CardPlay | null = null;
   public phase: GamePhase = 'waiting';
   public winner: string | null = null;
+  public lastWinner: string | null = null; // 上一局的获胜者
   public createdAt: number;
   public deck: Card[] = []; // 剩余牌堆
 
@@ -347,14 +349,45 @@ export class Game {
         name: player.name,
         cards: forPlayerId === player.id ? player.cards : [], // 只发送自己的手牌
         cardCount: player.cards.length,
-        isReady: player.isReady
+        isReady: player.isReady,
+        wantsRematch: player.wantsRematch || false
       })),
       currentPlayerIndex: this.currentPlayerIndex,
       lastPlay: this.lastPlay,
       phase: this.phase,
       winner: this.winner,
+      lastWinner: this.lastWinner,
       createdAt: this.createdAt,
       deckCount: this.deck.length // 剩余牌堆数量
     };
+  }
+
+  // 重置游戏为再玩一次状态
+  resetForRematch(lastWinner: string | null): void {
+    // 保存上一局获胜者
+    this.lastWinner = lastWinner;
+    
+    // 重置游戏状态
+    this.phase = 'waiting';
+    this.winner = null;
+    this.lastPlay = null;
+    this.deck = [];
+    
+    // 重置所有玩家状态
+    this.players.forEach(player => {
+      player.cards = [];
+      player.isReady = false;
+      player.wantsRematch = false;
+    });
+    
+    // 设置首出玩家为上一局的输家
+    if (lastWinner) {
+      const loserIndex = this.players.findIndex(p => p.id !== lastWinner);
+      this.currentPlayerIndex = loserIndex >= 0 ? loserIndex : 0;
+    } else {
+      this.currentPlayerIndex = 0;
+    }
+    
+    console.log(`游戏重置完成，下一局由 ${this.players[this.currentPlayerIndex]?.name} 先出牌`);
   }
 } 

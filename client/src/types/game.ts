@@ -41,6 +41,7 @@ export interface Player {
   cards: Card[];        // 手牌
   cardCount: number;    // 手牌数量 (对手只能看到数量)
   isReady: boolean;
+  wantsRematch?: boolean; // 是否想要再玩一次
 }
 
 // 游戏状态
@@ -51,6 +52,7 @@ export interface GameState {
   lastPlay: CardPlay | null;   // 上一次出牌
   phase: 'waiting' | 'playing' | 'finished';
   winner: string | null;
+  lastWinner?: string | null;  // 上一局的获胜者
   createdAt: number;
   deckCount?: number;         // 剩余牌堆数量
 }
@@ -62,6 +64,7 @@ export interface SocketEvents {
   'play-cards': { gameId: string; cards: Card[]; type: CardType };
   'pass': { gameId: string };
   'ready': { gameId: string };
+  'request-rematch': { gameId: string }; // 请求再玩一次
   
   // 服务端发送的事件
   'game-state': GameState;
@@ -69,4 +72,6 @@ export interface SocketEvents {
   'game-over': { winner: string; scores: { [playerId: string]: number } };
   'error': { message: string };
   'player-joined': { playerId: string; gameId: string; playerName: string };
+  'rematch-requested': { playerId: string; playerName: string }; // 有玩家请求再玩一次
+  'rematch-started': GameState; // 再玩一次开始
 } 

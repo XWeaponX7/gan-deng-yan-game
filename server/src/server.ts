@@ -231,6 +231,74 @@ io.on('connection', (socket) => {
     }
   });
 
+  // 请求再玩一次
+  socket.on('request-rematch', (data: { gameId: string }) => {
+    try {
+      const { gameId } = data;
+      const playerId = socket.id;
+      
+      const game = games.get(gameId);
+      if (!game) {
+        socket.emit('error', { message: '游戏不存在' });
+        return;
+      }
+
+      if (game.phase !== 'finished') {
+        socket.emit('error', { message: '游戏还未结束' });
+        return;
+      }
+
+      // 标记玩家想要再玩一次
+      const player = game.players.find(p => p.id === playerId);
+      if (!player) {
+        socket.emit('error', { message: '玩家不在游戏中' });
+        return;
+      }
+
+      player.wantsRematch = true;
+      console.log(`玩家 ${player.name} 请求再玩一次`);
+
+      // 通知所有玩家有人请求再玩一次
+      game.players.forEach(p => {
+        io.to(p.id).emit('rematch-requested', {
+          playerId: player.id,
+          playerName: player.name
+        });
+        io.to(p.id).emit('game-state', game.getGameState(p.id));
+      });
+
+      // 检查是否所有玩家都同意再玩一次
+      const allWantRematch = game.players.every(p => p.wantsRematch);
+      if (allWantRematch) {
+        console.log('所有玩家同意再玩一次，开始新游戏');
+        
+        // 记录上一局的获胜者
+        const lastWinner = game.winner;
+        
+        // 重置游戏状态
+        game.resetForRematch(lastWinner);
+        
+        // 开始新游戏
+        if (game.startGame()) {
+          // 通知客户端再玩一次开始
+          game.players.forEach(player => {
+            io.to(player.id).emit('rematch-started', game.getGameState(player.id));
+          });
+          
+          // 通知当前玩家轮到他了（应该是上局的输家）
+          const currentPlayer = game.getCurrentPlayer();
+          if (currentPlayer) {
+            io.to(currentPlayer.id).emit('your-turn', { playerId: currentPlayer.id });
+          }
+        }
+      }
+
+    } catch (error) {
+      console.error('再玩一次错误:', error);
+      socket.emit('error', { message: '再玩一次失败' });
+    }
+  });
+
   // 断开连接
   socket.on('disconnect', () => {
     const playerId = socket.id;

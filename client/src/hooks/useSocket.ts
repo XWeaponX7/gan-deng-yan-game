@@ -17,6 +17,7 @@ export interface UseSocketReturn {
   joinGame: (playerName: string) => void;
   playCards: (cards: Card[], type: CardType) => void;
   pass: () => void;
+  requestRematch: () => void;
 }
 
 export const useSocket = (): UseSocketReturn => {
@@ -158,6 +159,22 @@ export const useSocket = (): UseSocketReturn => {
     socket.emit('pass', { gameId: gameIdRef.current });
   };
 
+  // 请求再玩一次
+  const requestRematch = () => {
+    if (!socket || !isConnected) {
+      setError('未连接到服务器');
+      return;
+    }
+
+    if (!gameIdRef.current) {
+      setError('未加入游戏');
+      return;
+    }
+
+    console.log('请求再玩一次');
+    socket.emit('request-rematch', { gameId: gameIdRef.current });
+  };
+
   return {
     socket,
     isConnected,
@@ -167,6 +184,7 @@ export const useSocket = (): UseSocketReturn => {
     isJoining,
     joinGame,
     playCards,
-    pass
+    pass,
+    requestRematch
   };
 }; 

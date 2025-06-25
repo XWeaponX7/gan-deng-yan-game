@@ -19,7 +19,8 @@ function App() {
     isJoining,
     joinGame,
     playCards,
-    pass
+    pass,
+    requestRematch
   } = useSocket();
 
   // 连接到游戏
@@ -122,6 +123,7 @@ function App() {
       playerId={playerId}
       onPlayCards={handlePlayCards}
       onPass={pass}
+      onRequestRematch={requestRematch}
     />
   );
 }
