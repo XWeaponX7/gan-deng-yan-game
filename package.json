@@ -8,7 +8,7 @@
     "dev:server": "cd server && npm run dev",
     "build": "npm run install:all && cd client && npm run build && cd ../server && npm run build",
     "start": "cd server && npm start",
-    "install:all": "npm install && cd client && npm install && cd ../server && npm install"
+    "install:all": "npm install --production=false && cd client && npm install --production=false && cd ../server && npm install --production=false"
   },
   "keywords": ["card-game", "websocket", "realtime", "game"],
   "author": "Your Name",

@@ -5,6 +5,7 @@ import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
+import path from 'path';
 import { Game } from './models/Game';
 import { Card, CardType } from './models/Card';
 
@@ -17,10 +18,15 @@ app.use(cors({
   credentials: true
 }));
 
+// 在生产环境中提供静态文件
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '../../client/dist')));
+}
+
 // Socket.IO配置
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: process.env.NODE_ENV === 'production' ? true : (process.env.CLIENT_URL || "http://localhost:5173"),
     methods: ["GET", "POST"],
     credentials: true
   }
@@ -342,6 +348,13 @@ app.get('/', (req, res) => {
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+
+// 在生产环境中，所有其他请求都返回 index.html (用于支持前端路由)
+if (process.env.NODE_ENV === 'production') {
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../../client/dist/index.html'));
+  });
+}
 
 // 启动服务器
 const PORT = process.env.PORT || 3001;
