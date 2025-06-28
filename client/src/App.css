@@ -222,6 +222,27 @@ body {
   }
 }
 
+/* 快速选择效果 - 极短的视觉反馈 */
+@keyframes cardQuickSelect {
+  0% {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  50% {
+    transform: translateY(-8px) scale(1.05);
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.5);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* 即时卡牌选择反馈 - 超快速动画 */
+.card-quick-select-instant {
+  animation: cardQuickSelect 0.08s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
 /* 弹性缩放动画 */
 @keyframes elasticScale {
   0% {

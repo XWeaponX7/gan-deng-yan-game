@@ -86,6 +86,21 @@ export const useSocket = (): UseSocketReturn => {
       // 游戏结束处理
     });
 
+    // 再玩一次相关事件
+    newSocket.on('rematch-requested', (data: { 
+      playerId: string; 
+      playerName: string; 
+    }) => {
+      console.log('有玩家请求再玩一次:', data);
+      // 可以在这里添加通知
+    });
+
+    newSocket.on('rematch-started', (state: GameState) => {
+      console.log('再玩一次开始，新游戏状态:', state);
+      setGameState(state);
+      setError(''); // 清除可能的错误
+    });
+
     newSocket.on('error', (data: { message: string }) => {
       console.error('游戏错误:', data.message);
       setError(data.message);

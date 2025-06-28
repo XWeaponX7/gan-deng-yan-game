@@ -40,6 +40,9 @@ const VictoryEffect: React.FC<VictoryEffectProps> = ({ isVisible, playerName, is
       }, 5000);
 
       return () => clearTimeout(timeout);
+    } else {
+      // 当不可见时立即清理彩带
+      setConfettiPieces([]);
     }
   }, [isVisible]);
 

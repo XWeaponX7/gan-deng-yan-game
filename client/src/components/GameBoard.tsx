@@ -17,12 +17,14 @@ import {
   triggerAdvancedDeal,
   createParticleExplosion,
   triggerCardWobble,
+  triggerQuickSelect,
   triggerElasticScale,
   triggerGravityDrop,
   triggerMagicAura,
   triggerPlayCardCombo,
   createFloatingParticles,
-  triggerAdvancedRandomEffect
+  // 再玩一次特效
+  triggerRematchButtonEffect
 } from '../utils/uiUtils';
 
 interface GameBoardProps {
@@ -358,25 +360,22 @@ const GameBoard: React.FC<GameBoardProps> = ({
       }
     };
 
-    // 单击时的处理 - Phase 3增强版（即时反馈）
-    const handleClick = () => {
+    // 单击时的处理 - 即时反馈版本
+    const handleClick = (event: React.MouseEvent) => {
       if (onClick) {
-        // 立即执行选择逻辑
+        // 立即触发视觉反馈 - 不等待DOM查询
+        const cardElement = event.currentTarget as HTMLElement;
+        triggerQuickSelect(cardElement);
+        
+        // 立即执行选择逻辑（无延迟）
         onClick();
         
-        // Phase 3: 即时高级随机特效系统
-        const cardElement = document.querySelector(`[data-card-id="${card.id}"]`);
-        if (cardElement instanceof HTMLElement) {
-          // 根据卡牌类型和随机性决定特效强度
-          const isSpecialCard = ClientCardUtils.isSpecialCard(card);
-          const intensity = isSpecialCard ? 4 : Math.random() > 0.5 ? 2 : 1;
-          
-          if (Math.random() > 0.4) {
-            triggerAdvancedRandomEffect(cardElement, intensity);
-          } else {
-            // 基础摆动效果 - 即时触发
-            triggerCardWobble(cardElement);
-          }
+        // 根据卡牌类型添加额外效果（不阻塞主要反馈）
+        const isSpecialCard = ClientCardUtils.isSpecialCard(card);
+        if (isSpecialCard && Math.random() > 0.7) {
+          setTimeout(() => {
+            triggerElasticScale(cardElement);
+          }, 50);
         }
       }
     };
@@ -529,7 +528,12 @@ const GameBoard: React.FC<GameBoardProps> = ({
                   {/* 再玩一次按钮 */}
                   {!gameState.players.find(p => p.id === playerId)?.wantsRematch ? (
                     <button
-                      onClick={(e) => handleButtonClick(e, onRequestRematch)}
+                      onClick={(e) => {
+                        // 先触发特效
+                        triggerRematchButtonEffect(e.currentTarget);
+                        // 然后执行ripple和逻辑
+                        handleButtonClick(e, onRequestRematch);
+                      }}
                       className="btn-enhanced btn-primary text-sm px-6 py-2"
                     >
                       🔄 再玩一次
@@ -784,13 +788,9 @@ const GameBoard: React.FC<GameBoardProps> = ({
         )}
       </div>
       
-      {/* 胜利特效 - 修复再玩一次时的显示问题 */}
+      {/* 胜利特效 - 只在游戏结束且有获胜者时显示 */}
       <VictoryEffect 
-        isVisible={
-          gameState?.phase === 'finished' && 
-          !!gameState.winner && 
-          !gameState.players.every(p => p.wantsRematch)
-        }
+        isVisible={gameState?.phase === 'finished' && !!gameState.winner}
         playerName={gameState?.winner === playerId ? currentPlayer?.name || '你' : opponent?.name || '对手'}
         isWinner={gameState?.winner === playerId}
       />

@@ -300,6 +300,20 @@ export const triggerCardWobble = (element: HTMLElement): void => {
 };
 
 /**
+ * 快速选择效果 - 极短的视觉反馈，立即响应
+ * @param element 卡牌元素
+ */
+export const triggerQuickSelect = (element: HTMLElement): void => {
+  // 使用CSS动画类，更快更流畅
+  element.classList.add('card-quick-select-instant');
+  
+  // 60ms后移除类
+  setTimeout(() => {
+    element.classList.remove('card-quick-select-instant');
+  }, 60);
+};
+
+/**
  * 弹性缩放动画
  * @param element 目标元素
  */
@@ -445,4 +459,59 @@ export const triggerAdvancedRandomEffect = (element: HTMLElement, intensity: num
   selectedEffects.forEach((effect, index) => {
     setTimeout(() => effect(), index * 150);
   });
+};
+
+/**
+ * 再玩一次按钮特效 - 立即反馈
+ * @param element 按钮元素
+ */
+export const triggerRematchButtonEffect = (element: HTMLElement): void => {
+  // 立即视觉反馈
+  element.style.transform = 'scale(0.95)';
+  element.style.transition = 'all 0.1s ease';
+  
+  // 快速恢复并添加成功效果
+  setTimeout(() => {
+    element.style.transform = 'scale(1.02)';
+    element.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+    
+    // 添加粒子效果
+    const rect = element.getBoundingClientRect();
+    for (let i = 0; i < 8; i++) {
+      const particle = document.createElement('div');
+      particle.style.position = 'fixed';
+      particle.style.left = rect.left + rect.width / 2 + 'px';
+      particle.style.top = rect.top + rect.height / 2 + 'px';
+      particle.style.width = '4px';
+      particle.style.height = '4px';
+      particle.style.backgroundColor = '#10b981';
+      particle.style.borderRadius = '50%';
+      particle.style.pointerEvents = 'none';
+      particle.style.zIndex = '9999';
+      
+      const angle = (Math.PI * 2 * i) / 8;
+      const distance = 50;
+      const finalX = Math.cos(angle) * distance;
+      const finalY = Math.sin(angle) * distance;
+      
+      particle.style.transition = 'all 0.5s ease-out';
+      particle.style.transform = `translate(${finalX}px, ${finalY}px)`;
+      particle.style.opacity = '0';
+      
+      document.body.appendChild(particle);
+      
+      setTimeout(() => {
+        if (particle.parentNode) {
+          particle.parentNode.removeChild(particle);
+        }
+      }, 500);
+    }
+  }, 100);
+  
+  // 恢复原状
+  setTimeout(() => {
+    element.style.transform = '';
+    element.style.background = '';
+    element.style.transition = '';
+  }, 600);
 }; 
