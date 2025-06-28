@@ -5,7 +5,9 @@ import { useEffect, useState, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { GameState, Card, CardType } from '../types/game';
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3001';
+// 在生产环境中使用当前域名，开发环境使用localhost
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 
+  (import.meta.env.PROD ? window.location.origin : 'http://localhost:3001');
 
 export interface UseSocketReturn {
   socket: Socket | null;
