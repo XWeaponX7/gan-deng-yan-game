@@ -124,7 +124,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
       if (cardType && cardType !== lastSelectedCardType) {
         setLastSelectedCardType(cardType);
         
-        // Phase 3: 增强牌型识别动画
+        // Phase 3: 即时牌型识别动画
         selectedCards.forEach((card, index) => {
           setTimeout(() => {
             const cardElement = document.querySelector(`[data-card-id="${card.id}"]`);
@@ -137,24 +137,24 @@ const GameBoard: React.FC<GameBoardProps> = ({
               const isSpecial = ClientCardUtils.isSpecialCard(card);
               
               if (isBomb) {
-                // 炸弹类型：震动+粒子
+                // 炸弹类型：即时震动+粒子
+                triggerCardWobble(cardElement);
                 setTimeout(() => {
-                  triggerCardWobble(cardElement);
                   createParticleExplosion(cardElement, 15);
-                }, 200);
+                }, 100);
               } else if (isSpecial) {
-                // 特殊牌：魔法光环
+                // 特殊牌：即时魔法光环
                 setTimeout(() => {
                   triggerMagicAura(cardElement, 1500);
-                }, 300);
+                }, 50);
               } else if (selectedCards.length >= 3) {
-                // 多张牌：弹性效果
+                // 多张牌：即时弹性效果
                 setTimeout(() => {
                   triggerElasticScale(cardElement);
-                }, 100);
+                }, 30);
               }
             }
-          }, index * 80); // 错开动画时间
+          }, index * 30); // 大幅减少错开时间，更快响应
         });
       }
     } else {
@@ -340,45 +340,44 @@ const GameBoard: React.FC<GameBoardProps> = ({
       if (onClick) {
         selectSameRankCards(card);
         
-        // Phase 3: 双击特效组合
+        // Phase 3: 即时双击特效组合
         const cardElement = event.currentTarget as HTMLElement;
         
-        // 创建粒子爆炸
+        // 立即创建粒子爆炸
         createParticleExplosion(cardElement, 25);
         
-        // 弹性缩放
+        // 快速弹性缩放
         setTimeout(() => {
           triggerElasticScale(cardElement);
-        }, 200);
+        }, 50);
         
-        // 魔法光环
+        // 快速魔法光环
         setTimeout(() => {
           triggerMagicAura(cardElement, 2000);
-        }, 400);
+        }, 100);
       }
     };
 
-    // 单击时的处理 - Phase 3增强版
+    // 单击时的处理 - Phase 3增强版（即时反馈）
     const handleClick = () => {
       if (onClick) {
+        // 立即执行选择逻辑
         onClick();
         
-        // Phase 3: 高级随机特效系统
-        setTimeout(() => {
-          const cardElement = document.querySelector(`[data-card-id="${card.id}"]`);
-          if (cardElement instanceof HTMLElement) {
-            // 根据卡牌类型和随机性决定特效强度
-            const isSpecialCard = ClientCardUtils.isSpecialCard(card);
-            const intensity = isSpecialCard ? 4 : Math.random() > 0.5 ? 2 : 1;
-            
-            if (Math.random() > 0.4) {
-              triggerAdvancedRandomEffect(cardElement, intensity);
-            } else {
-              // 基础摆动效果
-              triggerCardWobble(cardElement);
-            }
+        // Phase 3: 即时高级随机特效系统
+        const cardElement = document.querySelector(`[data-card-id="${card.id}"]`);
+        if (cardElement instanceof HTMLElement) {
+          // 根据卡牌类型和随机性决定特效强度
+          const isSpecialCard = ClientCardUtils.isSpecialCard(card);
+          const intensity = isSpecialCard ? 4 : Math.random() > 0.5 ? 2 : 1;
+          
+          if (Math.random() > 0.4) {
+            triggerAdvancedRandomEffect(cardElement, intensity);
+          } else {
+            // 基础摆动效果 - 即时触发
+            triggerCardWobble(cardElement);
           }
-        }, 50);
+        }
       }
     };
     const getCardColor = (card: Card) => {
@@ -785,9 +784,13 @@ const GameBoard: React.FC<GameBoardProps> = ({
         )}
       </div>
       
-      {/* 胜利特效 */}
+      {/* 胜利特效 - 修复再玩一次时的显示问题 */}
       <VictoryEffect 
-        isVisible={gameState?.phase === 'finished' && !!gameState.winner}
+        isVisible={
+          gameState?.phase === 'finished' && 
+          !!gameState.winner && 
+          !gameState.players.every(p => p.wantsRematch)
+        }
         playerName={gameState?.winner === playerId ? currentPlayer?.name || '你' : opponent?.name || '对手'}
         isWinner={gameState?.winner === playerId}
       />

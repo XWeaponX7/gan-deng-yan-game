@@ -341,22 +341,22 @@ export const triggerMagicAura = (element: HTMLElement, duration: number = 3000):
 };
 
 /**
- * 组合动画：出牌时的复杂特效
+ * 组合动画：出牌时的复杂特效 - 优化版
  * @param element 卡牌元素
  */
 export const triggerPlayCardCombo = (element: HTMLElement): void => {
   // 先摆动
   triggerCardWobble(element);
   
-  // 然后粒子爆炸
+  // 然后粒子爆炸 - 更快触发
   setTimeout(() => {
     createParticleExplosion(element, 15);
-  }, 200);
+  }, 100);
   
-  // 最后飞向中心
+  // 最后飞向中心 - 更快触发
   setTimeout(() => {
     triggerCardFlyToCenter(element);
-  }, 400);
+  }, 200);
 };
 
 /**
@@ -443,6 +443,6 @@ export const triggerAdvancedRandomEffect = (element: HTMLElement, intensity: num
   const selectedEffects = effects.sort(() => Math.random() - 0.5).slice(0, effectCount);
   
   selectedEffects.forEach((effect, index) => {
-    setTimeout(() => effect(), index * 300);
+    setTimeout(() => effect(), index * 150);
   });
 }; 
