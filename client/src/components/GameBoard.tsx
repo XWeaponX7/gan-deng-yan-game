@@ -1,9 +1,29 @@
 // client/src/components/GameBoard.tsx
 // 游戏主界面组件 - UI优化版本
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { GameState, Card, CardType } from '../types/game';
 import { ClientCardUtils } from '../utils/cardUtils';
+import VictoryEffect from './VictoryEffect';
+import { 
+  createRippleEffect, 
+  addCardTypeGlow, 
+  addTurnTransition, 
+  debounce,
+  createVictoryEffect,
+  addVictoryCardAnimation,
+  addEnhancedHoverEffect,
+  // Phase 3 新增函数
+  triggerAdvancedDeal,
+  createParticleExplosion,
+  triggerCardWobble,
+  triggerElasticScale,
+  triggerGravityDrop,
+  triggerMagicAura,
+  triggerPlayCardCombo,
+  createFloatingParticles,
+  triggerAdvancedRandomEffect
+} from '../utils/uiUtils';
 
 interface GameBoardProps {
   gameState: GameState | null;
@@ -21,11 +41,126 @@ const GameBoard: React.FC<GameBoardProps> = ({
   onRequestRematch
 }) => {
   const [selectedCards, setSelectedCards] = useState<Card[]>([]);
+  const [lastSelectedCardType, setLastSelectedCardType] = useState<CardType | null>(null);
+  const currentTurnRef = useRef<number>(-1);
+  const gameStatusRef = useRef<HTMLDivElement>(null);
+  const gameContainerRef = useRef<HTMLDivElement>(null);
+  const [isFirstRender, setIsFirstRender] = useState(true);
 
   // 提前定义所有hooks，避免条件渲染问题
   const currentPlayer = gameState?.players.find(p => p.id === playerId);
   const opponent = gameState?.players.find(p => p.id !== playerId);
   const isMyTurn = gameState?.players[gameState.currentPlayerIndex]?.id === playerId;
+
+  // 监听游戏阶段变化，添加特效
+  useEffect(() => {
+    if (!gameState) return;
+
+    // 检测发牌（从waiting到playing的转换）
+    if (gameState.phase === 'playing' && isFirstRender) {
+      setIsFirstRender(false);
+      
+      // Phase 3: 高级发牌动画系统
+      setTimeout(() => {
+        if (currentPlayer?.cards) {
+          currentPlayer.cards.forEach((card, index) => {
+            const cardElement = document.querySelector(`[data-card-id="${card.id}"]`);
+            if (cardElement instanceof HTMLElement) {
+              // 使用高级发牌动画
+              triggerAdvancedDeal(cardElement, index * 150);
+              
+              // 添加随机重力掉落效果
+              if (Math.random() > 0.6) {
+                triggerGravityDrop(cardElement, index * 150 + 500);
+              }
+            }
+          });
+        }
+        
+        // 添加浮动粒子背景效果
+        if (gameContainerRef.current) {
+          createFloatingParticles(gameContainerRef.current, 8);
+        }
+      }, 200);
+    }
+
+    // 检测游戏结束，添加胜利特效
+    if (gameState.phase === 'finished' && gameState.winner) {
+      setTimeout(() => {
+        if (gameContainerRef.current) {
+          createVictoryEffect(gameContainerRef.current);
+        }
+        
+        // 如果我是获胜者，为我的卡牌添加胜利动画
+        if (gameState.winner === playerId && currentPlayer?.cards) {
+          const cardElements = currentPlayer.cards.map(card => 
+            document.querySelector(`[data-card-id="${card.id}"]`)
+          ).filter(element => element instanceof HTMLElement) as HTMLElement[];
+          
+          if (cardElements.length > 0) {
+            addVictoryCardAnimation(cardElements);
+          }
+        }
+      }, 500);
+    }
+  }, [gameState?.phase, gameState?.winner, playerId, currentPlayer?.cards, isFirstRender]);
+
+  // 监听轮次变化，添加动画效果
+  useEffect(() => {
+    if (gameState && gameState.currentPlayerIndex !== currentTurnRef.current) {
+      currentTurnRef.current = gameState.currentPlayerIndex;
+      
+      // 添加轮次切换动画
+      if (gameStatusRef.current) {
+        addTurnTransition(gameStatusRef.current);
+      }
+    }
+  }, [gameState?.currentPlayerIndex]);
+
+  // 监听选中卡牌变化，添加牌型识别动画 - Phase 3增强版
+  useEffect(() => {
+    if (selectedCards.length > 0) {
+      const cardType = ClientCardUtils.identifyCardType(selectedCards);
+      if (cardType && cardType !== lastSelectedCardType) {
+        setLastSelectedCardType(cardType);
+        
+        // Phase 3: 增强牌型识别动画
+        selectedCards.forEach((card, index) => {
+          setTimeout(() => {
+            const cardElement = document.querySelector(`[data-card-id="${card.id}"]`);
+            if (cardElement instanceof HTMLElement) {
+              // 基础发光动画
+              addCardTypeGlow(cardElement);
+              
+              // 根据牌型添加特殊效果
+              const isBomb = ClientCardUtils.isBomb(cardType);
+              const isSpecial = ClientCardUtils.isSpecialCard(card);
+              
+              if (isBomb) {
+                // 炸弹类型：震动+粒子
+                setTimeout(() => {
+                  triggerCardWobble(cardElement);
+                  createParticleExplosion(cardElement, 15);
+                }, 200);
+              } else if (isSpecial) {
+                // 特殊牌：魔法光环
+                setTimeout(() => {
+                  triggerMagicAura(cardElement, 1500);
+                }, 300);
+              } else if (selectedCards.length >= 3) {
+                // 多张牌：弹性效果
+                setTimeout(() => {
+                  triggerElasticScale(cardElement);
+                }, 100);
+              }
+            }
+          }, index * 80); // 错开动画时间
+        });
+      }
+    } else {
+      setLastSelectedCardType(null);
+    }
+  }, [selectedCards, lastSelectedCardType]);
 
   // 选择/取消选择卡牌
   const toggleCardSelection = useCallback((card: Card) => {
@@ -39,12 +174,39 @@ const GameBoard: React.FC<GameBoardProps> = ({
     });
   }, []);
 
-  // 出牌
-  const handlePlayCards = useCallback(() => {
-    if (selectedCards.length === 0) return;
-    onPlayCards(selectedCards);
-    setSelectedCards([]);
-  }, [selectedCards, onPlayCards]);
+  // 出牌 - 添加防抖处理和Phase 3动画
+  const handlePlayCards = useCallback(
+    debounce(() => {
+      if (selectedCards.length === 0) return;
+      
+      // Phase 3: 出牌复杂动画序列
+      selectedCards.forEach((card, index) => {
+        const cardElement = document.querySelector(`[data-card-id="${card.id}"]`);
+        if (cardElement instanceof HTMLElement) {
+          setTimeout(() => {
+            // 使用组合动画
+            triggerPlayCardCombo(cardElement);
+          }, index * 100);
+        }
+      });
+      
+      // 延迟执行出牌逻辑，让动画先播放
+      setTimeout(() => {
+        onPlayCards(selectedCards);
+        setSelectedCards([]);
+      }, selectedCards.length * 100 + 500);
+    }, 300),
+    [selectedCards, onPlayCards]
+  );
+
+  // 带ripple效果的按钮点击处理
+  const handleButtonClick = (
+    event: React.MouseEvent<HTMLButtonElement>,
+    action: () => void
+  ) => {
+    createRippleEffect(event);
+    action();
+  };
 
   // 全选同点数牌
   const selectSameRankCards = useCallback((targetCard: Card) => {
@@ -115,6 +277,17 @@ const GameBoard: React.FC<GameBoardProps> = ({
           <p className="text-lg text-white/90 mb-2">正在连接游戏...</p>
           <p className="text-sm text-white/70 mb-4">请稍候，正在建立连接</p>
           
+          {/* 骨架屏预览 */}
+          <div className="space-y-4 mt-6">
+            <div className="skeleton h-4 w-3/4 mx-auto rounded"></div>
+            <div className="skeleton h-4 w-1/2 mx-auto rounded"></div>
+            <div className="flex justify-center space-x-2 mt-4">
+              <div className="skeleton h-8 w-16 rounded"></div>
+              <div className="skeleton h-8 w-16 rounded"></div>
+              <div className="skeleton h-8 w-16 rounded"></div>
+            </div>
+          </div>
+          
           {/* 连接状态信息 */}
           <div className="bg-white/10 backdrop-blur rounded-lg p-4 border border-white/20">
             <p className="text-xs text-white/60 mb-2">连接状态</p>
@@ -161,11 +334,51 @@ const GameBoard: React.FC<GameBoardProps> = ({
 
   // 渲染卡牌 - 增强版本
   const renderCard = (card: Card, isSelected: boolean, onClick?: () => void) => {
-    // 双击选择同点数牌
+    // 双击选择同点数牌 - Phase 3增强版
     const handleDoubleClick = (event: React.MouseEvent) => {
       event.preventDefault();
       if (onClick) {
         selectSameRankCards(card);
+        
+        // Phase 3: 双击特效组合
+        const cardElement = event.currentTarget as HTMLElement;
+        
+        // 创建粒子爆炸
+        createParticleExplosion(cardElement, 25);
+        
+        // 弹性缩放
+        setTimeout(() => {
+          triggerElasticScale(cardElement);
+        }, 200);
+        
+        // 魔法光环
+        setTimeout(() => {
+          triggerMagicAura(cardElement, 2000);
+        }, 400);
+      }
+    };
+
+    // 单击时的处理 - Phase 3增强版
+    const handleClick = () => {
+      if (onClick) {
+        onClick();
+        
+        // Phase 3: 高级随机特效系统
+        setTimeout(() => {
+          const cardElement = document.querySelector(`[data-card-id="${card.id}"]`);
+          if (cardElement instanceof HTMLElement) {
+            // 根据卡牌类型和随机性决定特效强度
+            const isSpecialCard = ClientCardUtils.isSpecialCard(card);
+            const intensity = isSpecialCard ? 4 : Math.random() > 0.5 ? 2 : 1;
+            
+            if (Math.random() > 0.4) {
+              triggerAdvancedRandomEffect(cardElement, intensity);
+            } else {
+              // 基础摆动效果
+              triggerCardWobble(cardElement);
+            }
+          }
+        }, 50);
       }
     };
     const getCardColor = (card: Card) => {
@@ -203,13 +416,20 @@ const GameBoard: React.FC<GameBoardProps> = ({
           return (
         <div
           key={card.id}
-          onClick={onClick}
+          data-card-id={card.id}
+          onClick={handleClick}
           onDoubleClick={handleDoubleClick}
-          className={getCardClasses()}
+          className={`${getCardClasses()} card-enhanced-hover`}
           style={{
             animationDelay: `${Math.random() * 0.5}s`
           }}
           title={`${card.display} - 单击选择，双击选择所有${card.rank}`}
+          ref={(el) => {
+            if (el && !el.classList.contains('enhanced-hover-added')) {
+              addEnhancedHoverEffect(el);
+              el.classList.add('enhanced-hover-added');
+            }
+          }}
         >
         <span className="relative z-10 drop-shadow-sm">
           {card.display}
@@ -243,7 +463,10 @@ const GameBoard: React.FC<GameBoardProps> = ({
   };
 
   return (
-    <div className="game-background min-h-screen p-4">
+    <div 
+      ref={gameContainerRef}
+      className="game-background min-h-screen p-4 relative overflow-hidden"
+    >
       {/* 游戏状态栏 */}
       <div className="glass-panel p-6 mb-6">
         <div className="flex justify-between items-center text-white">
@@ -259,11 +482,14 @@ const GameBoard: React.FC<GameBoardProps> = ({
             )}
           </div>
           <div className="text-right">
-            <div className={`px-4 py-2 rounded-full border-2 transition-all ${
-              gameState.phase === 'waiting' ? 'border-yellow-400 bg-yellow-500/20' :
-              gameState.phase === 'playing' ? (isMyTurn ? 'border-green-400 bg-green-500/20 animate-pulse' : 'border-blue-400 bg-blue-500/20') :
-              'border-purple-400 bg-purple-500/20'
-            }`}>
+            <div 
+              ref={gameStatusRef}
+              className={`px-4 py-2 rounded-full border-2 transition-all ${
+                gameState.phase === 'waiting' ? 'border-yellow-400 bg-yellow-500/20' :
+                gameState.phase === 'playing' ? (isMyTurn ? 'border-green-400 bg-green-500/20 animate-pulse' : 'border-blue-400 bg-blue-500/20') :
+                'border-purple-400 bg-purple-500/20'
+              }`}
+            >
               <p className="text-sm font-semibold">
                 {gameState.phase === 'waiting' && '⏳ 等待开始'}
                 {gameState.phase === 'playing' && (isMyTurn ? '🎯 轮到你了' : '⏸️ 对手回合')}
@@ -304,7 +530,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
                   {/* 再玩一次按钮 */}
                   {!gameState.players.find(p => p.id === playerId)?.wantsRematch ? (
                     <button
-                      onClick={onRequestRematch}
+                      onClick={(e) => handleButtonClick(e, onRequestRematch)}
                       className="btn-enhanced btn-primary text-sm px-6 py-2"
                     >
                       🔄 再玩一次
@@ -419,14 +645,22 @@ const GameBoard: React.FC<GameBoardProps> = ({
         <div className="glass-panel p-5 mb-6">
           <div className="flex gap-2">
             <button
-              onClick={handlePlayCards}
+              onClick={(e) => {
+                if (selectedCards.length > 0) {
+                  handleButtonClick(e, handlePlayCards);
+                }
+              }}
               disabled={selectedCards.length === 0}
               className={`btn-enhanced ${selectedCards.length === 0 ? 'btn-disabled' : 'btn-primary'}`}
             >
               🚀 出牌 ({selectedCards.length})
             </button>
             <button
-              onClick={onPass}
+              onClick={(e) => {
+                if (gameState.lastPlay) {
+                  handleButtonClick(e, onPass);
+                }
+              }}
               disabled={!gameState.lastPlay}
               className={`btn-enhanced ${!gameState.lastPlay ? 'btn-disabled' : 'btn-danger'}`}
             >
@@ -522,7 +756,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
         
         <div className="flex flex-wrap gap-2 min-h-24 p-3 bg-white/5 backdrop-blur rounded-lg border border-white/10">
           {currentPlayer?.cards && currentPlayer.cards.length > 0 ? (
-            currentPlayer.cards.map((card, index) => 
+            currentPlayer.cards.map((card) => 
               renderCard(
                 card, 
                 selectedCards.some(c => c.id === card.id),
@@ -550,6 +784,13 @@ const GameBoard: React.FC<GameBoardProps> = ({
           </div>
         )}
       </div>
+      
+      {/* 胜利特效 */}
+      <VictoryEffect 
+        isVisible={gameState?.phase === 'finished' && !!gameState.winner}
+        playerName={gameState?.winner === playerId ? currentPlayer?.name || '你' : opponent?.name || '对手'}
+        isWinner={gameState?.winner === playerId}
+      />
     </div>
   );
 };

@@ -2,10 +2,10 @@
 // 干瞪眼游戏主应用组件
 
 import { useState } from 'react';
-import { CardType } from './types/game';
 import GameBoard from './components/GameBoard';
 import { useSocket } from './hooks/useSocket';
 import { ClientCardUtils } from './utils/cardUtils';
+import { createRippleEffect } from './utils/uiUtils';
 import './App.css';
 
 function App() {
@@ -83,7 +83,12 @@ function App() {
             )}
             
             <button
-              onClick={handleJoinGame}
+              onClick={(e) => {
+                if (!isJoining && playerName.trim()) {
+                  createRippleEffect(e);
+                  handleJoinGame();
+                }
+              }}
               disabled={!playerName.trim() || isJoining}
               className={`w-full btn-enhanced ${(!playerName.trim() || isJoining) ? 'btn-disabled' : 'btn-primary'}`}
             >
