@@ -20,7 +20,11 @@ app.use(cors({
 
 // 在生产环境中提供静态文件
 if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../../client/dist')));
+  const staticPath = path.join(__dirname, '../../client/dist');
+  console.log('🗂️ 静态文件路径:', staticPath);
+  console.log('🏠 当前工作目录:', process.cwd());
+  console.log('📁 __dirname:', __dirname);
+  app.use(express.static(staticPath));
 }
 
 // Socket.IO配置
@@ -333,8 +337,8 @@ io.on('connection', (socket) => {
   });
 });
 
-// 基础路由
-app.get('/', (req, res) => {
+// API路由
+app.get('/api', (req, res) => {
   res.json({ 
     message: '干瞪眼游戏服务端运行中',
     stats: {
@@ -352,7 +356,20 @@ app.get('/health', (req, res) => {
 // 在生产环境中，所有其他请求都返回 index.html (用于支持前端路由)
 if (process.env.NODE_ENV === 'production') {
   app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../../client/dist/index.html'));
+    const indexPath = path.join(__dirname, '../../client/dist/index.html');
+    console.log('📄 尝试发送 index.html:', indexPath);
+    res.sendFile(indexPath);
+  });
+} else {
+  // 开发环境的基础路由
+  app.get('/', (req, res) => {
+    res.json({ 
+      message: '干瞪眼游戏服务端运行中 (开发模式)',
+      stats: {
+        activeGames: games.size,
+        connectedPlayers: io.engine.clientsCount
+      }
+    });
   });
 }
 
