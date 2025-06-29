@@ -238,118 +238,58 @@ body {
   }
 }
 
-/* 即时卡牌选择反馈 - 超快速动画 */
+/* 即时快速选择动画 - 最快响应 */
 .card-quick-select-instant {
-  animation: cardQuickSelect 0.08s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  animation: instantSelect 0.06s ease-out;
+  z-index: 15;
 }
 
-/* 弹性缩放动画 */
-@keyframes elasticScale {
-  0% {
-    transform: scale(1);
-  }
-  30% {
-    transform: scale(1.25);
-  }
-  40% {
-    transform: scale(1.1);
-  }
-  50% {
-    transform: scale(1.2);
-  }
-  65% {
-    transform: scale(1.05);
-  }
-  75% {
-    transform: scale(1.1);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
-/* 重力效果动画 */
-@keyframes gravityDrop {
-  0% {
-    transform: translateY(-500px) rotateZ(0deg);
-    animation-timing-function: ease-in;
-  }
-  60% {
-    transform: translateY(20px) rotateZ(5deg);
-    animation-timing-function: ease-out;
-  }
-  80% {
-    transform: translateY(-10px) rotateZ(-2deg);
-  }
-  90% {
-    transform: translateY(5px) rotateZ(1deg);
-  }
-  100% {
-    transform: translateY(0) rotateZ(0deg);
-  }
-}
-
-/* 魔法光环效果 */
-@keyframes magicAura {
-  0%, 100% {
-    box-shadow: 
-      0 0 5px rgba(138, 43, 226, 0.3),
-      0 0 10px rgba(138, 43, 226, 0.2),
-      0 0 15px rgba(138, 43, 226, 0.1);
-  }
-  33% {
-    box-shadow: 
-      0 0 10px rgba(255, 20, 147, 0.4),
-      0 0 20px rgba(255, 20, 147, 0.3),
-      0 0 30px rgba(255, 20, 147, 0.2);
-  }
-  66% {
-    box-shadow: 
-      0 0 15px rgba(0, 191, 255, 0.5),
-      0 0 25px rgba(0, 191, 255, 0.4),
-      0 0 35px rgba(0, 191, 255, 0.3);
-  }
-}
-
-/* ===================
-   Phase 1 增强动画系统
-   =================== */
-
-/* 按钮Ripple效果 */
-@keyframes ripple {
-  to {
-    transform: scale(4);
-    opacity: 0;
-  }
-}
-
-/* 牌型识别颜色渐变动画 - 增强版 */
-@keyframes cardTypeGlow {
+@keyframes instantSelect {
   0% { 
-    box-shadow: 0 0 5px rgba(59, 130, 246, 0.5);
-    transform: scale(1);
-    border-color: #3B82F6;
-  }
-  25% { 
-    box-shadow: 0 0 15px rgba(59, 130, 246, 0.8), 0 0 25px rgba(59, 130, 246, 0.6);
-    transform: scale(1.05);
-    border-color: #1D4ED8;
+    transform: scale(1); 
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
   }
   50% { 
-    box-shadow: 0 0 30px rgba(59, 130, 246, 1), 0 0 40px rgba(59, 130, 246, 0.8);
-    transform: scale(1.08);
-    border-color: #2563EB;
-  }
-  75% { 
-    box-shadow: 0 0 15px rgba(59, 130, 246, 0.8), 0 0 25px rgba(59, 130, 246, 0.6);
-    transform: scale(1.05);
-    border-color: #1D4ED8;
+    transform: scale(0.97); 
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
   }
   100% { 
-    box-shadow: 0 0 5px rgba(59, 130, 246, 0.5);
-    transform: scale(1);
-    border-color: #3B82F6;
+    transform: scale(1.01); 
+    box-shadow: 0 12px 30px rgba(59, 130, 246, 0.4);
   }
+}
+
+/* 增强的卡牌选中状态 - 更明显的视觉反馈 */
+.card.selected {
+  animation: cardSelect 0.2s ease-out; /* 缩短动画时间 */
+  transform: translateY(-12px) scale(1.03); /* 更明显的抬升和缩放 */
+  box-shadow: 
+    0 15px 35px rgba(59, 130, 246, 0.4),
+    0 8px 20px rgba(59, 130, 246, 0.3),
+    0 0 0 3px rgba(59, 130, 246, 0.2); /* 添加外发光边框 */
+  border: 2px solid #3B82F6;
+  background: #f0f8ff;
+  color: #1e40af !important;
+  z-index: 10;
+}
+
+/* 卡牌hover时的即时反馈 */
+.card:hover {
+  transform: translateY(-5px) rotateX(3deg) scale(1.02); /* 减少抬升高度 */
+  box-shadow: 
+    0 8px 25px rgba(0, 0, 0, 0.15),
+    0 4px 12px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  border-color: #9ca3af;
+  background: #ffffff;
+  transition: all 0.15s ease-out; /* 更快的hover响应 */
+}
+
+/* 牌型识别发光效果 - 更快触发 */
+.card.card-type-glow {
+  animation: cardTypeGlow 1s ease-in-out; /* 缩短动画时间 */
+  z-index: 12;
+  position: relative;
 }
 
 /* 轮次切换淡入淡出动画 */
@@ -502,18 +442,6 @@ body {
     inset 0 1px 0 rgba(255, 255, 255, 0.7);
   border-color: #9ca3af;
   background: #ffffff; /* 保持完全不透明 */
-}
-
-/* 卡牌选中状态 */
-.card.selected {
-  animation: cardSelect 0.3s ease-out;
-  transform: translateY(-15px) scale(1.02);
-  box-shadow: 
-    0 20px 40px rgba(59, 130, 246, 0.4),
-    0 10px 25px rgba(59, 130, 246, 0.3);
-  border: 2px solid #3B82F6;
-  background: #f0f8ff; /* 改为完全不透明的浅蓝色 */
-  color: #1e40af !important; /* 深蓝色文字 */
 }
 
 /* 牌型识别动画效果 - 增强版 */
@@ -919,5 +847,80 @@ body {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* 弹性缩放动画 */
+@keyframes elasticScale {
+  0% { 
+    transform: scale(1); 
+  }
+  30% {
+    transform: scale(1.15);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% { 
+    transform: scale(1);
+  }
+}
+
+/* 重力效果动画 */
+@keyframes gravityDrop {
+  0% {
+    transform: translateY(-300px) rotateZ(0deg);
+    animation-timing-function: ease-in;
+  }
+  60% {
+    transform: translateY(15px) rotateZ(3deg);
+    animation-timing-function: ease-out;
+  }
+  80% {
+    transform: translateY(-8px) rotateZ(-1deg);
+  }
+  90% {
+    transform: translateY(3px) rotateZ(0.5deg);
+  }
+  100% {
+    transform: translateY(0) rotateZ(0deg);
+  }
+}
+
+/* 魔法光环效果 - 快速版 */
+@keyframes magicAura {
+  0%, 100% {
+    box-shadow: 
+      0 0 5px rgba(138, 43, 226, 0.3),
+      0 0 10px rgba(138, 43, 226, 0.2);
+  }
+  50% {
+    box-shadow: 
+      0 0 15px rgba(255, 20, 147, 0.5),
+      0 0 25px rgba(255, 20, 147, 0.3);
+  }
+}
+
+/* 按钮Ripple效果 */
+@keyframes ripple {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* 牌型识别颜色渐变动画 - 快速版 */
+@keyframes cardTypeGlow {
+  0% { 
+    box-shadow: 0 0 5px rgba(59, 130, 246, 0.5);
+    transform: scale(1);
+  }
+  50% { 
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.8), 0 0 30px rgba(59, 130, 246, 0.6);
+    transform: scale(1.04);
+  }
+  100% { 
+    box-shadow: 0 0 5px rgba(59, 130, 246, 0.5);
+    transform: scale(1);
   }
 } 

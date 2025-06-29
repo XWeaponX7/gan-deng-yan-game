@@ -198,7 +198,7 @@ export const triggerRematchButtonEffect = (element: HTMLElement): void => {
 
 ---
 
-**修复日期**: 2024年12月10日  
+**修复日期**: 2025年6月28日  
 **修复人员**: AI Assistant  
 **测试状态**: 全部通过 ✅  
 **部署状态**: 已部署 🚀 
