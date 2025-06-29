@@ -127,7 +127,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
         setLastSelectedCardType(cardType);
         
         // 即时牌型识别动画 - 大幅减少延迟
-        selectedCards.forEach((card, index) => {
+        selectedCards.forEach((card) => {
           const cardElement = document.querySelector(`[data-card-id="${card.id}"]`);
           if (cardElement instanceof HTMLElement) {
             // 立即触发基础发光动画
