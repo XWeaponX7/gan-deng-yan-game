@@ -474,7 +474,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
       {/* 游戏主容器 - 响应式最大宽度并居中 */}
       <div className="w-full max-w-sm sm:max-w-2xl lg:max-w-4xl xl:max-w-5xl flex flex-col">
         {/* 游戏状态栏 - 压缩高度 */}
-        <div className="glass-panel p-3 sm:p-4 mb-2 sm:mb-4 flex-shrink-0">
+        <div className="glass-panel p-3 sm:p-4 mb-2 sm:mb-4 flex-shrink-0 rounded-xl">
           <div className="flex justify-between items-center text-white">
             <div className="flex-1">
               <h2 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
@@ -539,7 +539,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
         </div>
 
         {/* 对手信息区域 - 压缩高度 */}
-        <div className="glass-panel p-3 mb-2 sm:mb-3 flex-shrink-0">
+        <div className="glass-panel p-3 mb-2 sm:mb-3 flex-shrink-0 rounded-xl">
           <div className="flex justify-between items-center mb-2">
             <h3 className="text-white font-bold text-sm">
               👤 {opponent?.name || '等待中...'}
@@ -558,7 +558,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
             )}
           </div>
           
-          <div className="flex flex-wrap gap-1 min-h-12 p-2 bg-white/5 backdrop-blur rounded-lg border border-white/10">
+          <div className="flex flex-wrap gap-1 min-h-12 p-2 bg-white/5 backdrop-blur border border-white/10" style={{borderRadius: '8px', margin: '4px'}}>
             {opponent ? (
               Array.from({ length: Math.min(opponent.cardCount, 15) }, (_, i) => (
                 <div
@@ -588,7 +588,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
         </div>
 
         {/* 上次出牌区域 - 重点显示，增加高度 */}
-        <div className="glass-panel p-3 mb-2 sm:mb-3 flex-1 min-h-0 border-2 border-yellow-400/30">
+        <div className="glass-panel p-3 mb-2 sm:mb-3 flex-1 min-h-0 border-2 border-yellow-400/30 rounded-xl">
           <h3 className="text-white font-bold mb-2 text-sm">🎯 上次出牌</h3>
           {gameState.lastPlay ? (
             <div className="h-full flex flex-col">
@@ -632,7 +632,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
 
         {/* 游戏控制按钮 - 紧凑设计 */}
         {gameState.phase === 'playing' && isMyTurn && (
-          <div className="glass-panel p-3 mb-2 flex-shrink-0 relative">
+          <div className="glass-panel p-3 mb-2 flex-shrink-0 relative rounded-xl">
             <div className="flex gap-2 mb-2">
               <button
                 onClick={(e) => {
@@ -657,16 +657,17 @@ const GameBoard: React.FC<GameBoardProps> = ({
                 ⏭️ 过牌
               </button>
               
-              {/* 快捷键信息按钮 */}
+              {/* 快捷键信息按钮 - 美化版 */}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   setShowShortcutsInfo(!showShortcutsInfo);
                 }}
-                className="btn-enhanced bg-white/10 hover:bg-white/20 border border-white/30 w-8 h-8 flex items-center justify-center text-xs text-white/70 hover:text-white transition-all"
-                title="查看快捷键"
+                className="btn-enhanced bg-gradient-to-br from-blue-500/80 to-purple-600/80 hover:from-blue-400/90 hover:to-purple-500/90 border border-blue-400/50 hover:border-blue-300/70 w-10 h-10 flex items-center justify-center text-sm font-bold text-white hover:text-blue-100 transition-all duration-200 rounded-xl shadow-lg hover:shadow-blue-500/25 relative overflow-hidden group"
+                title="查看快捷键和操作说明"
               >
-                ?
+                <span className="relative z-10">❓</span>
+                <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
               </button>
             </div>
 
@@ -690,76 +691,78 @@ const GameBoard: React.FC<GameBoardProps> = ({
               </div>
             )}
             
-            {/* 快捷键信息弹窗 */}
+            {/* 快捷键信息弹窗 - 修复为固定定位并提高z-index */}
             {showShortcutsInfo && (
-              <div className="absolute top-full right-0 mt-2 w-64 sm:w-72 z-50 glass-panel p-4 border border-white/20 shadow-xl">
-                <div className="flex justify-between items-center mb-3">
-                  <h4 className="text-white font-bold text-sm">⌨️ 快捷键说明</h4>
-                  <button
-                    onClick={() => setShowShortcutsInfo(false)}
-                    className="text-white/60 hover:text-white text-lg leading-none"
-                  >
-                    ×
-                  </button>
-                </div>
-                
-                <div className="space-y-2 text-xs">
-                  <div className="flex justify-between items-center py-1">
-                    <span className="text-white/80">出牌</span>
-                    <div className="flex gap-1">
-                      <kbd className="bg-white/20 text-white px-2 py-1 rounded text-xs">空格</kbd>
-                      <kbd className="bg-white/20 text-white px-2 py-1 rounded text-xs">回车</kbd>
-                    </div>
+              <div className="fixed inset-0 flex items-center justify-center z-[9999] px-4">
+                <div className="glass-panel p-4 border border-white/20 shadow-xl w-full max-w-sm">
+                  <div className="flex justify-between items-center mb-3">
+                    <h4 className="text-white font-bold text-sm">⌨️ 快捷键说明</h4>
+                    <button
+                      onClick={() => setShowShortcutsInfo(false)}
+                      className="text-white/60 hover:text-white text-lg leading-none"
+                    >
+                      ×
+                    </button>
                   </div>
                   
-                  <div className="flex justify-between items-center py-1">
-                    <span className="text-white/80">过牌</span>
-                    <kbd className="bg-white/20 text-white px-2 py-1 rounded text-xs">P</kbd>
-                  </div>
-                  
-                  <div className="flex justify-between items-center py-1">
-                    <span className="text-white/80">全选/取消</span>
-                    <kbd className="bg-white/20 text-white px-2 py-1 rounded text-xs">A</kbd>
-                  </div>
-                  
-                  <div className="flex justify-between items-center py-1">
-                    <span className="text-white/80">清空选择</span>
-                    <kbd className="bg-white/20 text-white px-2 py-1 rounded text-xs">ESC</kbd>
-                  </div>
-                  
-                  <div className="border-t border-white/20 pt-2 mt-3">
+                  <div className="space-y-2 text-xs">
                     <div className="flex justify-between items-center py-1">
-                      <span className="text-white/80">单击卡牌</span>
-                      <span className="text-white/60 text-xs">选择/取消</span>
+                      <span className="text-white/80">出牌</span>
+                      <div className="flex gap-1">
+                        <kbd className="bg-white/20 text-white px-2 py-1 rounded text-xs">空格</kbd>
+                        <kbd className="bg-white/20 text-white px-2 py-1 rounded text-xs">回车</kbd>
+                      </div>
                     </div>
                     
                     <div className="flex justify-between items-center py-1">
-                      <span className="text-white/80">双击卡牌</span>
-                      <span className="text-white/60 text-xs">选择同点数</span>
+                      <span className="text-white/80">过牌</span>
+                      <kbd className="bg-white/20 text-white px-2 py-1 rounded text-xs">P</kbd>
+                    </div>
+                    
+                    <div className="flex justify-between items-center py-1">
+                      <span className="text-white/80">全选/取消</span>
+                      <kbd className="bg-white/20 text-white px-2 py-1 rounded text-xs">A</kbd>
+                    </div>
+                    
+                    <div className="flex justify-between items-center py-1">
+                      <span className="text-white/80">清空选择</span>
+                      <kbd className="bg-white/20 text-white px-2 py-1 rounded text-xs">ESC</kbd>
+                    </div>
+                    
+                    <div className="border-t border-white/20 pt-2 mt-3">
+                      <div className="flex justify-between items-center py-1">
+                        <span className="text-white/80">单击卡牌</span>
+                        <span className="text-white/60 text-xs">选择/取消</span>
+                      </div>
+                      
+                      <div className="flex justify-between items-center py-1">
+                        <span className="text-white/80">双击卡牌</span>
+                        <span className="text-white/60 text-xs">选择同点数</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-                
-                <div className="mt-3 pt-2 border-t border-white/20">
-                  <p className="text-white/50 text-xs text-center">
-                    💡 在桌面端可使用键盘快捷键
-                  </p>
+                  
+                  <div className="mt-3 pt-2 border-t border-white/20">
+                    <p className="text-white/50 text-xs text-center">
+                      💡 在桌面端可使用键盘快捷键
+                    </p>
+                  </div>
                 </div>
               </div>
             )}
           </div>
         )}
         
-        {/* 点击其他区域时关闭快捷键弹窗 */}
+        {/* 点击其他区域时关闭快捷键弹窗 - 更新z-index */}
         {showShortcutsInfo && (
           <div 
-            className="fixed inset-0 z-40" 
+            className="fixed inset-0 z-[9998] bg-black/50" 
             onClick={() => setShowShortcutsInfo(false)}
           />
         )}
 
         {/* 我的手牌 - 重点区域，确保充足空间 */}
-        <div className="glass-panel p-3 flex-1 min-h-0 border-2 border-green-400/30">
+        <div className="glass-panel p-3 flex-1 min-h-0 border-2 border-green-400/30 overflow-hidden rounded-xl">
           <div className="flex justify-between items-center mb-2">
             <h3 className="text-white font-bold text-sm">🎲 我的手牌: {currentPlayer?.name}</h3>
             <div className="text-right">
@@ -774,7 +777,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
             </div>
           </div>
           
-          <div className="flex flex-wrap gap-1 sm:gap-2 min-h-20 pt-4 pb-2 px-2 bg-white/5 backdrop-blur rounded-lg border border-white/10 h-full overflow-y-auto">
+          <div className="flex flex-wrap gap-1 sm:gap-2 min-h-20 pt-3 pb-3 px-3 bg-white/5 backdrop-blur border border-white/10 flex-1 overflow-hidden relative" style={{borderRadius: '8px', margin: '4px'}}>
             {currentPlayer?.cards && currentPlayer.cards.length > 0 ? (
               currentPlayer.cards.map((card) => 
                 renderCard(

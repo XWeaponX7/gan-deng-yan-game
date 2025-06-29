@@ -970,4 +970,74 @@ body {
     box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
     transform: scale(1);
   }
+}
+
+/* ===================
+   快捷键帮助按钮特效
+   =================== */
+
+/* 快捷键按钮的特殊发光效果 */
+.btn-enhanced.bg-gradient-to-br {
+  position: relative;
+  box-shadow: 
+    0 4px 15px rgba(59, 130, 246, 0.4),
+    0 2px 8px rgba(139, 92, 246, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.btn-enhanced.bg-gradient-to-br:hover {
+  box-shadow: 
+    0 6px 20px rgba(59, 130, 246, 0.6),
+    0 3px 12px rgba(139, 92, 246, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px) scale(1.05);
+}
+
+/* 添加按钮按下效果 */
+.btn-enhanced.bg-gradient-to-br:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 
+    0 2px 8px rgba(59, 130, 246, 0.4),
+    0 1px 4px rgba(139, 92, 246, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* 问号图标脉冲效果 */
+@keyframes questionPulse {
+  0%, 100% { 
+    transform: scale(1);
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+  }
+  50% { 
+    transform: scale(1.1);
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+  }
+}
+
+.btn-enhanced:hover span {
+  animation: questionPulse 1.5s ease-in-out infinite;
+}
+
+/* ===================
+   手牌容器圆角修复
+   =================== */
+
+/* 确保手牌容器的圆角可见 */
+.glass-panel.rounded-xl {
+  border-radius: 12px !important;
+}
+
+/* 手牌内容区域的圆角需要稍小一些以显示外层圆角 */
+.glass-panel .bg-white\/5 {
+  border-radius: 8px !important;
+  margin: 2px;
+}
+
+/* 替代方案：使用box-shadow inset来创建内边距效果 */
+.hand-cards-container {
+  border-radius: 8px;
+  margin: 2px;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 } 
