@@ -79,11 +79,40 @@ static isWildcardStraight(normalCards: Card[], jokerCount: number): boolean {
 结果：合法顺子 ✅
 ```
 
+**进一步完善 - 智能接牌逻辑**:
+在用户提出"K+Q+小王既可以是J-Q-K也可以是Q-K-A"的问题后，我们实现了更智能的百搭解释系统：
+
+```typescript
+// 新增：获取所有可能的百搭解释
+static getAllPossibleStraightValues(cards: Card[]): number[] {
+  // 返回所有可能的起始值，如K+Q+小王返回[11, 12]
+}
+
+// 新增：智能选择最优接牌解释  
+static getBestStraightValueToBeat(newCards: Card[], targetMinValue: number): number | null {
+  // 自动选择刚好能压制对手的最小解释
+}
+
+// 升级：智能比较逻辑
+static compareStraights(straight1: Card[], straight2: Card[]): number {
+  // 对百搭顺子智能选择最优解释进行比较
+}
+```
+
+**智能接牌效果**:
+- **K+Q+小王 vs 8-9-10**: 自动选择J-Q-K解释 ✅
+- **K+Q+小王 vs J-Q-K**: 自动选择Q-K-A解释 ✅  
+- **K+Q+小王 vs Q-K-A**: 识别无法接牌 ✅
+- **主动出牌**: 默认使用最小解释（策略性保留）
+- **接牌场景**: 自动选择最优解释（精确压制）
+
 **修复结果**:
-- ✅ K+Q+小王正确识别为J-Q-K顺子
-- ✅ 保持对其他百搭顺子组合的支持
+- ✅ K+Q+小王支持双重解释：J-Q-K 和 Q-K-A
+- ✅ 根据游戏情境智能选择最优百搭含义
+- ✅ 完全符合干瞪眼游戏的策略性要求
+- ✅ 前后端逻辑完全一致
 - ✅ 算法更加健壮和准确
-- ✅ 游戏规则符合预期
+- ✅ 游戏规则符合预期和用户期望
 
 ---
 
