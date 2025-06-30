@@ -324,15 +324,37 @@ export class CardUtils {
       return jokerCount >= 3;
     }
     
-    // 计算最小可能的顺子范围
-    const minValue = sortedNormal[0].value;
-    const maxValue = sortedNormal[sortedNormal.length - 1].value;
-    const currentSpan = maxValue - minValue + 1;
+    // 尝试所有可能的顺子起点
+    const minPossibleStart = Math.max(3, sortedNormal[0].value - jokerCount);
+    const maxPossibleStart = sortedNormal[sortedNormal.length - 1].value - totalLength + 1;
     
-    // 需要的牌数应该等于总牌数
-    const neededGaps = currentSpan - sortedNormal.length;
+    for (let start = minPossibleStart; start <= maxPossibleStart && start >= 3; start++) {
+      const end = start + totalLength - 1;
+      
+      // 检查这个范围是否有效（不能超过A=14，除非包含2但2不能在顺子中）
+      if (end > 14) continue;
+      
+      // 检查是否能用现有牌+大小王填满这个范围
+      let neededJokers = 0;
+      let normalIndex = 0;
+      
+      for (let pos = start; pos <= end; pos++) {
+        if (normalIndex < sortedNormal.length && sortedNormal[normalIndex].value === pos) {
+          // 这个位置有普通牌
+          normalIndex++;
+        } else {
+          // 这个位置需要大小王
+          neededJokers++;
+        }
+      }
+      
+      // 如果需要的大小王数量不超过实际拥有的，且所有普通牌都被使用
+      if (neededJokers <= jokerCount && normalIndex === sortedNormal.length) {
+        return true;
+      }
+    }
     
-    return neededGaps <= jokerCount && currentSpan === totalLength;
+    return false;
   }
 
   // 比较顺子大小（按最小的牌比较）
