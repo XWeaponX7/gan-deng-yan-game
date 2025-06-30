@@ -326,7 +326,7 @@ export class CardUtils {
     
     // 尝试所有可能的顺子起点
     const minPossibleStart = Math.max(3, sortedNormal[0].value - jokerCount);
-    const maxPossibleStart = sortedNormal[sortedNormal.length - 1].value - totalLength + 1;
+    const maxPossibleStart = Math.min(14 - totalLength + 1, sortedNormal[sortedNormal.length - 1].value);
     
     for (let start = minPossibleStart; start <= maxPossibleStart && start >= 3; start++) {
       const end = start + totalLength - 1;
