@@ -1,7 +1,95 @@
-# 🔧 Bug修复报告 - 2025.06.28
+# 🔧 Bug修复报告
 
-## 概述
-本次修复解决了游戏中两个关键的用户体验问题，显著提升了游戏的响应性和功能完整性。
+## 最新修复 - 2025.06.28
+
+### 3. 百搭顺子逻辑错误 - 已修复 ✅
+
+**问题描述**:
+- K+Q+小王组合无法识别为合法顺子
+- 玩家反馈该牌型应该是有效的J-Q-K-A顺子（小王代替J或A）
+- 影响游戏的公平性和规则正确性
+
+**原因分析**:
+- `isWildcardStraight`函数逻辑有缺陷
+- 原算法要求`currentSpan === totalLength`，在某些情况下不正确
+- 对于K(13)+Q(12)+小王的情况：
+  - currentSpan = 13-12+1 = 2
+  - totalLength = 3  
+  - 2 !== 3，导致错误地返回false
+
+**修复方案**:
+1. **重构算法逻辑**: 改用尝试所有可能起点的方法
+2. **精确验证**: 逐位置检查是否能用现有牌+大小王填满
+3. **完整测试**: 确保K+Q+小王等边界情况正确识别
+
+**技术实现**:
+```typescript
+// 修复前的错误逻辑
+static isWildcardStraight(normalCards: Card[], jokerCount: number): boolean {
+  // ... 其他检查
+  const currentSpan = maxValue - minValue + 1;
+  const neededGaps = currentSpan - sortedNormal.length;
+  return neededGaps <= jokerCount && currentSpan === totalLength; // 错误的条件
+}
+
+// 修复后的正确逻辑
+static isWildcardStraight(normalCards: Card[], jokerCount: number): boolean {
+  // ... 其他检查
+  
+  // 尝试所有可能的顺子起点
+  const minPossibleStart = Math.max(3, sortedNormal[0].value - jokerCount);
+  const maxPossibleStart = sortedNormal[sortedNormal.length - 1].value - totalLength + 1;
+  
+  for (let start = minPossibleStart; start <= maxPossibleStart && start >= 3; start++) {
+    const end = start + totalLength - 1;
+    if (end > 14) continue; // 不能超过A
+    
+    // 逐位置验证是否能填满
+    let neededJokers = 0;
+    let normalIndex = 0;
+    
+    for (let pos = start; pos <= end; pos++) {
+      if (normalIndex < sortedNormal.length && sortedNormal[normalIndex].value === pos) {
+        normalIndex++; // 使用普通牌
+      } else {
+        neededJokers++; // 需要大小王
+      }
+    }
+    
+    // 检查是否可行
+    if (neededJokers <= jokerCount && normalIndex === sortedNormal.length) {
+      return true;
+    }
+  }
+  
+  return false;
+}
+```
+
+**修复验证**:
+```javascript
+// 测试K+Q+小王
+输入：K(13) + Q(12) + 小王
+分离：normalCards = [Q(12), K(13)]，jokerCount = 1
+尝试起点11：J(11)-Q(12)-K(13)
+- 位置11：需要大小王（小王代替J）
+- 位置12：使用普通牌Q  
+- 位置13：使用普通牌K
+需要大小王：1，拥有：1 ✓
+结果：合法顺子 ✅
+```
+
+**修复结果**:
+- ✅ K+Q+小王正确识别为J-Q-K顺子
+- ✅ 保持对其他百搭顺子组合的支持
+- ✅ 算法更加健壮和准确
+- ✅ 游戏规则符合预期
+
+---
+
+## 历史修复 - 2025.06.28
+
+**概述**: 解决了游戏中两个关键的用户体验问题，显著提升了游戏的响应性和功能完整性。
 
 ## 🚀 修复的问题
 
