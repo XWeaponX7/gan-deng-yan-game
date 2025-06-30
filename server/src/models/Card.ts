@@ -361,29 +361,96 @@ export class CardUtils {
   static compareStraights(straight1: Card[], straight2: Card[]): number {
     const minValue1 = this.getStraightMinValue(straight1);
     const minValue2 = this.getStraightMinValue(straight2);
+    
+    // 如果新顺子包含大小王，检查是否能智能选择更优的解释
+    const hasJoker1 = straight1.some(c => c.rank === 'small_joker' || c.rank === 'big_joker');
+    
+    if (hasJoker1) {
+      // 对于百搭顺子，尝试找到能够压制目标顺子的最优数值
+      const bestValue = this.getBestStraightValueToBeat(straight1, minValue2);
+      if (bestValue !== null) {
+        return bestValue - minValue2;
+      }
+    }
+    
     return minValue1 - minValue2;
   }
 
-  // 获取顺子的最小数值（处理百搭）
-  static getStraightMinValue(cards: Card[]): number {
+  // 检查百搭顺子是否能压制指定顺子
+  static canWildcardStraightBeat(newCards: Card[], lastCards: Card[]): boolean {
+    if (newCards.length !== lastCards.length) return false;
+    
+    const lastMinValue = this.getStraightMinValue(lastCards);
+    const newPossibleValues = this.getAllPossibleStraightValues(newCards);
+    
+    // 检查新顺子是否有任何一种解释能够压制目标顺子
+    return newPossibleValues.some(value => value > lastMinValue);
+  }
+
+  // 获取百搭顺子的所有可能数值（用于接牌时智能选择）
+  static getAllPossibleStraightValues(cards: Card[]): number[] {
     const normalCards = cards.filter(c => c.rank !== 'small_joker' && c.rank !== 'big_joker');
     const jokerCount = cards.length - normalCards.length;
     
     if (normalCards.length === 0) {
-      // 全是大小王，假设是最小的顺子（3-4-5...）
-      return 3;
+      // 全是大小王，可以组成任意顺子，返回所有可能的起始值
+      const possibilities: number[] = [];
+      const totalLength = cards.length;
+      for (let start = 3; start + totalLength - 1 <= 14; start++) {
+        possibilities.push(start);
+      }
+      return possibilities;
     }
     
     const sortedNormal = this.sortCards(normalCards);
-    const minNormalValue = sortedNormal[0].value;
-    const maxNormalValue = sortedNormal[sortedNormal.length - 1].value;
     const totalLength = cards.length;
+    const possibilities: number[] = [];
     
-    // 计算可能的最小起始值
-    // 大小王可以填在前面或中间
-    const possibleMinValue = Math.max(3, maxNormalValue - totalLength + 1);
+    // 尝试所有可能的顺子起点，收集有效的起始值
+    const minPossibleStart = Math.max(3, sortedNormal[0].value - jokerCount);
+    const maxPossibleStart = Math.min(14 - totalLength + 1, sortedNormal[sortedNormal.length - 1].value);
     
-    return Math.min(minNormalValue, possibleMinValue);
+    for (let start = minPossibleStart; start <= maxPossibleStart && start >= 3; start++) {
+      const end = start + totalLength - 1;
+      if (end > 14) continue; // 不能超过A
+      
+      // 检查是否能用现有牌+大小王填满这个范围
+      let neededJokers = 0;
+      let normalIndex = 0;
+      let canForm = true;
+      
+      for (let pos = start; pos <= end; pos++) {
+        if (normalIndex < sortedNormal.length && sortedNormal[normalIndex].value === pos) {
+          normalIndex++;
+        } else {
+          neededJokers++;
+        }
+      }
+      
+      // 如果这种组合可行，记录起始值
+      if (neededJokers <= jokerCount && normalIndex === sortedNormal.length) {
+        possibilities.push(start);
+      }
+    }
+    
+    return possibilities;
+  }
+
+  // 获取顺子的最小数值（处理百搭） - 主动出牌时使用
+  static getStraightMinValue(cards: Card[]): number {
+    const possibilities = this.getAllPossibleStraightValues(cards);
+    return possibilities.length > 0 ? Math.min(...possibilities) : 3;
+  }
+
+  // 获取百搭顺子用于接牌的最优数值
+  static getBestStraightValueToBeat(newCards: Card[], targetMinValue: number): number | null {
+    const possibilities = this.getAllPossibleStraightValues(newCards);
+    
+    // 找到能够压制目标顺子的最小值
+    const validValues = possibilities.filter(value => value > targetMinValue);
+    
+    if (validValues.length === 0) return null;
+    return Math.min(...validValues);
   }
 
   // 比较三张炸弹大小
