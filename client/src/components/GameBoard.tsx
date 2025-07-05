@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { GameState, Card, CardType } from '../types/game';
 import { ClientCardUtils } from '../utils/cardUtils';
 import VictoryEffect from './VictoryEffect';
+import TurnTimer from './TurnTimer';
 import { 
   createRippleEffect, 
   addCardTypeGlow, 
@@ -33,6 +34,7 @@ interface GameBoardProps {
   onPlayCards: (cards: Card[]) => void;
   onPass: () => void;
   onRequestRematch: () => void; // 新增：请求再玩一次
+  turnTimeoutPlayerId?: string | null; // 新增：超时的玩家ID
 }
 
 const GameBoard: React.FC<GameBoardProps> = ({ 
@@ -40,7 +42,8 @@ const GameBoard: React.FC<GameBoardProps> = ({
   playerId, 
   onPlayCards, 
   onPass,
-  onRequestRematch
+  onRequestRematch,
+  turnTimeoutPlayerId
 }) => {
   const [selectedCards, setSelectedCards] = useState<Card[]>([]);
   const [lastSelectedCardType, setLastSelectedCardType] = useState<CardType | null>(null);
@@ -216,6 +219,14 @@ const GameBoard: React.FC<GameBoardProps> = ({
     createRippleEffect(event);
     action();
   };
+
+  // 处理倒计时超时
+  const handleTurnTimeout = useCallback(() => {
+    if (isMyTurn && gameState?.lastPlay) {
+      console.log('倒计时结束，自动过牌');
+      onPass();
+    }
+  }, [isMyTurn, gameState?.lastPlay, onPass]);
 
   // 全选同点数牌
   const selectSameRankCards = useCallback((targetCard: Card) => {
@@ -488,6 +499,19 @@ const GameBoard: React.FC<GameBoardProps> = ({
                 )}
               </div>
             </div>
+
+            {/* 中间显示倒计时 */}
+            {gameState.phase === 'playing' && gameState.turnStartTime && gameState.turnTimeLimit && (
+              <div className="flex-shrink-0 mx-4">
+                <TurnTimer
+                  isMyTurn={isMyTurn}
+                  turnStartTime={gameState.turnStartTime}
+                  turnTimeLimit={gameState.turnTimeLimit}
+                  onTimeout={handleTurnTimeout}
+                />
+              </div>
+            )}
+
             <div className="text-right flex-shrink-0">
               <div 
                 ref={gameStatusRef}
@@ -507,6 +531,15 @@ const GameBoard: React.FC<GameBoardProps> = ({
                 <div className="mt-2 p-2 rounded-lg bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-400/50">
                   <p className="text-sm font-bold">
                     {gameState.winner === playerId ? '🏆 你赢了!' : '😅 对手获胜'}
+                  </p>
+                </div>
+              )}
+
+              {/* 超时提示 */}
+              {turnTimeoutPlayerId && (
+                <div className="mt-2 p-2 rounded-lg bg-orange-500/20 border border-orange-400/50">
+                  <p className="text-xs text-orange-300">
+                    ⏰ {gameState.players.find(p => p.id === turnTimeoutPlayerId)?.name || '玩家'} 出牌超时
                   </p>
                 </div>
               )}

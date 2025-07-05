@@ -16,6 +16,7 @@ export interface UseSocketReturn {
   playerId: string;
   error: string;
   isJoining: boolean;
+  turnTimeoutPlayerId: string | null;
   joinGame: (playerName: string, maxPlayers?: number) => void;
   playCards: (cards: Card[], type: CardType) => void;
   pass: () => void;
@@ -29,6 +30,7 @@ export const useSocket = (): UseSocketReturn => {
   const [playerId, setPlayerId] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [isJoining, setIsJoining] = useState(false);
+  const [turnTimeoutPlayerId, setTurnTimeoutPlayerId] = useState<string | null>(null);
   const gameIdRef = useRef<string>('');
 
   useEffect(() => {
@@ -101,6 +103,16 @@ export const useSocket = (): UseSocketReturn => {
       console.log('再玩一次开始，新游戏状态:', state);
       setGameState(state);
       setError(''); // 清除可能的错误
+    });
+
+    // 轮次超时事件
+    newSocket.on('turn-timeout', (data: { playerId: string }) => {
+      console.log('玩家超时:', data);
+      setTurnTimeoutPlayerId(data.playerId);
+      // 3秒后清除超时提示
+      setTimeout(() => {
+        setTurnTimeoutPlayerId(null);
+      }, 3000);
     });
 
     newSocket.on('error', (data: { message: string }) => {
@@ -199,6 +211,7 @@ export const useSocket = (): UseSocketReturn => {
     playerId,
     error,
     isJoining,
+    turnTimeoutPlayerId,
     joinGame,
     playCards,
     pass,

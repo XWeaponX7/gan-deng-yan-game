@@ -34,6 +34,9 @@ export class Game {
   public maxPlayers: number; // 房间最大人数 (2-6)
   public consecutivePasses: number = 0; // 连续过牌计数
   public lastPlayerId: string | null = null; // 最后出牌的玩家ID
+  public turnStartTime: number | null = null; // 当前轮次开始时间戳
+  public turnTimeLimit: number = 20; // 出牌时间限制（秒）
+  private turnTimer: NodeJS.Timeout | null = null; // 轮次计时器
 
   constructor(gameId: string, maxPlayers: number = 2) {
     this.id = gameId;
@@ -114,6 +117,9 @@ export class Game {
     this.consecutivePasses = 0;
     this.lastPlayerId = null;
 
+    // 注意：计时器将在server.ts中设置，这里不设置
+    // this.startTurnTimer();
+
     return true;
   }
 
@@ -167,6 +173,9 @@ export class Game {
     this.lastPlayerId = playerId;
     this.consecutivePasses = 0; // 重置连续过牌计数
 
+    // 清除当前计时器
+    this.clearTurnTimer();
+
     // 检查是否获胜
     if (player.cards.length === 0) {
       this.winner = playerId;
@@ -196,6 +205,9 @@ export class Game {
 
     // 增加连续过牌计数
     this.consecutivePasses++;
+
+    // 清除当前计时器
+    this.clearTurnTimer();
 
     // 切换到下一个玩家
     this.nextPlayer();
@@ -363,6 +375,39 @@ export class Game {
   // 切换到下一个玩家
   private nextPlayer(): void {
     this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.players.length;
+    // 注意：这里不自动开始计时器，由外部调用者决定
+  }
+
+  // 开始轮次计时器
+  public startTurnTimer(onTimeout?: (playerId: string) => void): void {
+    this.clearTurnTimer();
+    this.turnStartTime = Date.now();
+    
+    if (onTimeout) {
+      this.turnTimer = setTimeout(() => {
+        const currentPlayer = this.getCurrentPlayer();
+        if (currentPlayer && this.phase === 'playing') {
+          console.log(`玩家 ${currentPlayer.name} 出牌超时，自动过牌`);
+          onTimeout(currentPlayer.id);
+        }
+      }, this.turnTimeLimit * 1000);
+    }
+  }
+
+  // 清除轮次计时器
+  public clearTurnTimer(): void {
+    if (this.turnTimer) {
+      clearTimeout(this.turnTimer);
+      this.turnTimer = null;
+    }
+    this.turnStartTime = null;
+  }
+
+  // 获取剩余时间（秒）
+  public getRemainingTime(): number {
+    if (!this.turnStartTime) return this.turnTimeLimit;
+    const elapsed = (Date.now() - this.turnStartTime) / 1000;
+    return Math.max(0, this.turnTimeLimit - elapsed);
   }
 
   // 检查是否开始新一轮 (所有其他玩家都过牌)
@@ -402,7 +447,10 @@ export class Game {
       deckCount: this.deck.length, // 剩余牌堆数量
       discardPileCount: this.discardPile.length, // 已出牌堆数量
       consecutivePasses: this.consecutivePasses, // 连续过牌次数
-      lastPlayerId: this.lastPlayerId
+      lastPlayerId: this.lastPlayerId,
+      maxPlayers: this.maxPlayers,
+      turnStartTime: this.turnStartTime, // 当前轮次开始时间
+      turnTimeLimit: this.turnTimeLimit // 出牌时间限制
     };
   }
 
@@ -419,6 +467,9 @@ export class Game {
     this.discardPile = [];
     this.consecutivePasses = 0;
     this.lastPlayerId = null;
+    
+    // 清除计时器
+    this.clearTurnTimer();
     
     // 重置所有玩家状态
     this.players.forEach(player => {

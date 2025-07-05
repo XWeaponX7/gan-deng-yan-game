@@ -59,6 +59,8 @@ export interface GameState {
   maxPlayers?: number;        // 房间最大人数
   consecutivePasses?: number; // 连续过牌次数
   lastPlayerId?: string | null; // 最后出牌的玩家ID
+  turnStartTime?: number;     // 当前轮次开始时间戳
+  turnTimeLimit?: number;     // 出牌时间限制（秒）
 }
 
 // WebSocket 事件类型
@@ -78,6 +80,7 @@ export interface SocketEvents {
   'player-joined': { playerId: string; gameId: string; playerName: string };
   'rematch-requested': { playerId: string; playerName: string }; // 有玩家请求再玩一次
   'rematch-started': GameState; // 再玩一次开始
+  'turn-timeout': { playerId: string }; // 轮次超时事件
 }
 
 // 玩家加入事件

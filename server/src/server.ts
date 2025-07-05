@@ -46,6 +46,32 @@ function generateId(): string {
   return Math.random().toString(36).substr(2, 9);
 }
 
+// 设置轮次计时器的通用函数
+function setupTurnTimer(game: Game): void {
+  game.startTurnTimer((playerId) => {
+    // 玩家超时，自动过牌
+    const result = game.pass(playerId);
+    if (result.success) {
+      // 通知所有玩家有人超时
+      io.to(game.id).emit('turn-timeout', { playerId });
+      
+      // 广播游戏状态更新
+      game.players.forEach(player => {
+        io.to(player.id).emit('game-state', game.getGameState(player.id));
+      });
+      
+      // 递归设置下一个玩家的计时器
+      setupTurnTimer(game);
+      
+      // 通知下一个玩家
+      const currentPlayer = game.getCurrentPlayer();
+      if (currentPlayer) {
+        io.to(currentPlayer.id).emit('your-turn', { playerId: currentPlayer.id });
+      }
+    }
+  });
+}
+
 // 创建新游戏
 function createGame(maxPlayers: number = 2): Game {
   const gameId = generateId();
@@ -145,6 +171,9 @@ io.on('connection', (socket) => {
         console.log(`房间 ${game.id} 已满员 (${game.players.length}/${game.maxPlayers})，准备开始游戏`);
         setTimeout(() => {
           if (game.startGame()) {
+            // 设置超时处理回调
+            setupTurnTimer(game);
+            
             // 为每个玩家发送包含自己手牌的游戏状态
             game.players.forEach(player => {
               io.to(player.id).emit('game-state', game.getGameState(player.id));
@@ -205,6 +234,9 @@ io.on('connection', (socket) => {
           }, {} as { [key: string]: number })
         });
       } else {
+        // 重新设置计时器
+        setupTurnTimer(game);
+        
         // 通知下一个玩家
         const currentPlayer = game.getCurrentPlayer();
         if (currentPlayer) {
@@ -237,16 +269,19 @@ io.on('connection', (socket) => {
         return;
       }
 
-              // 广播游戏状态更新
-        game.players.forEach(player => {
-          io.to(player.id).emit('game-state', game.getGameState(player.id));
-        });
+      // 广播游戏状态更新
+      game.players.forEach(player => {
+        io.to(player.id).emit('game-state', game.getGameState(player.id));
+      });
 
-        // 通知下一个玩家
-        const currentPlayer = game.getCurrentPlayer();
-        if (currentPlayer) {
-          io.to(currentPlayer.id).emit('your-turn', { playerId: currentPlayer.id });
-        }
+      // 重新设置计时器
+      setupTurnTimer(game);
+
+      // 通知下一个玩家
+      const currentPlayer = game.getCurrentPlayer();
+      if (currentPlayer) {
+        io.to(currentPlayer.id).emit('your-turn', { playerId: currentPlayer.id });
+      }
 
     } catch (error) {
       console.error('过牌错误:', error);
@@ -303,6 +338,9 @@ io.on('connection', (socket) => {
         
         // 开始新游戏
         if (game.startGame()) {
+          // 设置计时器
+          setupTurnTimer(game);
+          
           // 通知客户端再玩一次开始
           game.players.forEach(player => {
             io.to(player.id).emit('rematch-started', game.getGameState(player.id));

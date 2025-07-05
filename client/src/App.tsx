@@ -27,7 +27,8 @@ function App() {
     playCards,
     pass,
     requestRematch,
-    socket
+    socket,
+    turnTimeoutPlayerId
   } = useSocket();
 
   // 监听玩家加入事件
@@ -229,6 +230,7 @@ function App() {
         onPlayCards={handlePlayCards}
         onPass={pass}
         onRequestRematch={requestRematch}
+        turnTimeoutPlayerId={turnTimeoutPlayerId}
       />
     </div>
   );
