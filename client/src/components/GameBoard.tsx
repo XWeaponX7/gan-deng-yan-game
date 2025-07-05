@@ -52,8 +52,9 @@ const GameBoard: React.FC<GameBoardProps> = ({
 
   // 提前定义所有hooks，避免条件渲染问题
   const currentPlayer = gameState?.players.find(p => p.id === playerId);
-  const opponent = gameState?.players.find(p => p.id !== playerId);
+  const otherPlayers = gameState?.players.filter(p => p.id !== playerId) || [];
   const isMyTurn = gameState?.players[gameState.currentPlayerIndex]?.id === playerId;
+  const currentTurnPlayer = gameState?.players[gameState.currentPlayerIndex];
 
   // 监听游戏阶段变化，添加特效
   useEffect(() => {
@@ -538,50 +539,90 @@ const GameBoard: React.FC<GameBoardProps> = ({
           </div>
         </div>
 
-        {/* 对手信息区域 - 压缩高度 */}
+        {/* 其他玩家信息区域 - 支持多人显示 */}
         <div className="glass-panel p-3 mb-2 sm:mb-3 flex-shrink-0 rounded-xl">
           <div className="flex justify-between items-center mb-2">
             <h3 className="text-white font-bold text-sm">
-              👤 {opponent?.name || '等待中...'}
+              👥 其他玩家 ({otherPlayers.length}人)
             </h3>
-            {opponent && (
+            {gameState?.maxPlayers && (
               <div className="text-right">
                 <p className="text-white/80 text-xs">
-                  剩余 <span className="font-bold text-red-300">{opponent.cardCount}</span> 张
+                  房间: {gameState.players.length}/{gameState.maxPlayers}
                 </p>
-                {opponent.cardCount <= 3 && opponent.cardCount > 0 && (
-                  <p className="text-red-400 text-xs font-bold animate-pulse">
-                    🚨 即将获胜！
-                  </p>
-                )}
               </div>
             )}
           </div>
           
-          <div className="flex flex-wrap gap-1 min-h-12 p-2 bg-white/5 backdrop-blur border border-white/10" style={{borderRadius: '8px', margin: '4px'}}>
-            {opponent ? (
-              Array.from({ length: Math.min(opponent.cardCount, 15) }, (_, i) => (
-                <div
-                  key={i}
-                  className="w-8 h-11 bg-gradient-to-br from-blue-500 to-blue-700 rounded border border-blue-400/50 shadow-lg card-3d"
-                  style={{
-                    animationDelay: `${i * 0.05}s`,
-                    transform: `rotate(${(Math.random() - 0.5) * 5}deg)`
-                  }}
-                  title={`对手剩余 ${opponent.cardCount} 张牌`}
-                >
-                  <div className="w-full h-full bg-gradient-to-br from-white/20 via-transparent to-transparent rounded"></div>
-                </div>
-              )).concat(
-                opponent.cardCount > 15 ? [
-                  <div key="more" className="w-8 h-11 flex items-center justify-center text-white/60 text-xs">
-                    +{opponent.cardCount - 15}
+          {/* 多人玩家列表 */}
+          <div className="space-y-2">
+            {otherPlayers.length > 0 ? (
+              otherPlayers.map((player, index) => {
+                const isCurrentTurn = currentTurnPlayer?.id === player.id;
+                return (
+                  <div
+                    key={player.id}
+                    className={`flex items-center justify-between p-2 rounded-lg transition-all ${
+                      isCurrentTurn 
+                        ? 'bg-green-500/20 border border-green-400/50 animate-pulse' 
+                        : 'bg-white/10 border border-white/20'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className={`text-lg ${isCurrentTurn ? '🎯' : '👤'}`}>
+                        {isCurrentTurn ? '🎯' : '👤'}
+                      </span>
+                      <div>
+                        <p className={`font-medium text-sm ${
+                          isCurrentTurn ? 'text-green-300' : 'text-white'
+                        }`}>
+                          {player.name}
+                          {isCurrentTurn && (
+                            <span className="ml-1 text-xs text-green-400 animate-pulse">
+                              (出牌中)
+                            </span>
+                          )}
+                        </p>
+                        {player.cardCount <= 3 && player.cardCount > 0 && (
+                          <p className="text-red-400 text-xs font-bold animate-pulse">
+                            🚨 剩余{player.cardCount}张！
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="text-right">
+                      <p className={`text-xs font-bold ${
+                        player.cardCount <= 3 ? 'text-red-300' : 'text-white/80'
+                      }`}>
+                        {player.cardCount} 张
+                      </p>
+                      {/* 显示部分手牌背面 */}
+                      <div className="flex gap-0.5 mt-1 justify-end">
+                        {Array.from({ length: Math.min(player.cardCount, 5) }, (_, i) => (
+                          <div
+                            key={i}
+                            className="w-3 h-4 bg-gradient-to-br from-blue-500 to-blue-700 rounded-sm border border-blue-400/50 shadow-sm"
+                            style={{
+                              transform: `rotate(${(Math.random() - 0.5) * 10}deg) translateY(${i * -2}px)`,
+                              zIndex: 5 - i
+                            }}
+                            title={`${player.name} 剩余 ${player.cardCount} 张牌`}
+                          />
+                        ))}
+                        {player.cardCount > 5 && (
+                          <div className="w-3 h-4 flex items-center justify-center text-white/60 text-xs">
+                            +{player.cardCount - 5}
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                ] : []
-              )
+                );
+              })
             ) : (
-              <div className="w-full h-11 flex items-center justify-center">
-                <p className="text-white/60 text-xs">🔍 寻找对手中...</p>
+              <div className="p-4 text-center">
+                <p className="text-white/60 text-sm">🔍 等待其他玩家加入...</p>
               </div>
             )}
           </div>
@@ -811,7 +852,8 @@ const GameBoard: React.FC<GameBoardProps> = ({
         {/* 胜利特效 */}
         <VictoryEffect 
           isVisible={gameState?.phase === 'finished' && !!gameState.winner}
-          playerName={gameState?.winner === playerId ? currentPlayer?.name || '你' : opponent?.name || '对手'}
+          playerName={gameState?.winner === playerId ? currentPlayer?.name || '你' : 
+            gameState?.players.find(p => p.id === gameState.winner)?.name || '对手'}
           isWinner={gameState?.winner === playerId}
         />
       </div>

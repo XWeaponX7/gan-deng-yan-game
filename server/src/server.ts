@@ -47,18 +47,21 @@ function generateId(): string {
 }
 
 // 创建新游戏
-function createGame(): Game {
+function createGame(maxPlayers: number = 2): Game {
   const gameId = generateId();
-  const game = new Game(gameId);
+  const game = new Game(gameId, maxPlayers);
   games.set(gameId, game);
+  console.log(`创建新游戏: ${gameId}，最大人数: ${maxPlayers}`);
   return game;
 }
 
 // 匹配玩家到游戏
-function matchPlayer(playerId: string, playerName: string): Game | null {
-  // 查找等待中的游戏
+function matchPlayer(playerId: string, playerName: string, maxPlayers: number = 2): Game | null {
+  // 查找等待中且人数要求相同的游戏
   for (const [gameId, game] of games.entries()) {
-    if (game.phase === 'waiting' && game.players.length < 2) {
+    if (game.phase === 'waiting' && 
+        game.maxPlayers === maxPlayers && 
+        game.players.length < game.maxPlayers) {
       if (game.addPlayer(playerId, playerName)) {
         playerToGame.set(playerId, gameId);
         return game;
@@ -66,8 +69,8 @@ function matchPlayer(playerId: string, playerName: string): Game | null {
     }
   }
 
-  // 没有等待的游戏，创建新游戏
-  const newGame = createGame();
+  // 没有合适的等待游戏，创建新游戏
+  const newGame = createGame(maxPlayers);
   if (newGame.addPlayer(playerId, playerName)) {
     playerToGame.set(playerId, newGame.id);
     return newGame;
@@ -98,13 +101,16 @@ io.on('connection', (socket) => {
   });
 
   // 加入游戏
-  socket.on('join-game', (data: { playerName: string }) => {
+  socket.on('join-game', (data: { playerName: string; maxPlayers?: number }) => {
     try {
-      const { playerName } = data;
+      const { playerName, maxPlayers = 2 } = data;
       const playerId = socket.id;
       
+      // 验证maxPlayers参数
+      const validMaxPlayers = Math.min(Math.max(maxPlayers, 2), 6);
+      
       // 匹配玩家到游戏
-      const game = matchPlayer(playerId, playerName);
+      const game = matchPlayer(playerId, playerName, validMaxPlayers);
       
       if (!game) {
         socket.emit('error', { message: '无法加入游戏' });
@@ -118,11 +124,13 @@ io.on('connection', (socket) => {
       socket.emit('player-joined', {
         playerId,
         gameId: game.id,
-        playerName
+        playerName,
+        maxPlayers: game.maxPlayers,
+        currentPlayers: game.players.length
       });
 
       // 立即发送游戏状态
-      console.log(`发送游戏状态给 ${playerName} (${playerId})`);
+      console.log(`发送游戏状态给 ${playerName} (${playerId})，房间 ${game.id}: ${game.players.length}/${game.maxPlayers}`);
       socket.emit('game-state', game.getGameState(playerId));
 
       // 为其他玩家也发送更新的游戏状态
@@ -133,7 +141,8 @@ io.on('connection', (socket) => {
       });
 
       // 如果房间满了，自动开始游戏
-      if (game.players.length === 2) {
+      if (game.players.length === game.maxPlayers) {
+        console.log(`房间 ${game.id} 已满员 (${game.players.length}/${game.maxPlayers})，准备开始游戏`);
         setTimeout(() => {
           if (game.startGame()) {
             // 为每个玩家发送包含自己手牌的游戏状态
@@ -146,8 +155,12 @@ io.on('connection', (socket) => {
             if (currentPlayer) {
               io.to(currentPlayer.id).emit('your-turn', { playerId: currentPlayer.id });
             }
+            
+            console.log(`游戏 ${game.id} 开始，首出玩家: ${currentPlayer?.name}`);
           }
         }, 1000); // 延迟1秒开始，让客户端准备好
+      } else {
+        console.log(`等待更多玩家加入房间 ${game.id}: ${game.players.length}/${game.maxPlayers}`);
       }
 
       console.log(`玩家 ${playerName} 加入游戏 ${game.id}`);

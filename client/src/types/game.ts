@@ -55,6 +55,10 @@ export interface GameState {
   lastWinner?: string | null;  // 上一局的获胜者
   createdAt: number;
   deckCount?: number;         // 剩余牌堆数量
+  discardPileCount?: number;  // 已出牌堆数量
+  maxPlayers?: number;        // 房间最大人数
+  consecutivePasses?: number; // 连续过牌次数
+  lastPlayerId?: string | null; // 最后出牌的玩家ID
 }
 
 // WebSocket 事件类型
@@ -74,4 +78,13 @@ export interface SocketEvents {
   'player-joined': { playerId: string; gameId: string; playerName: string };
   'rematch-requested': { playerId: string; playerName: string }; // 有玩家请求再玩一次
   'rematch-started': GameState; // 再玩一次开始
+}
+
+// 玩家加入事件
+export interface PlayerJoinedEvent {
+  playerId: string;
+  gameId: string;
+  playerName: string;
+  maxPlayers: number;
+  currentPlayers: number;
 } 

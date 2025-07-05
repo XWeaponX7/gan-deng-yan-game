@@ -11,14 +11,14 @@ export interface Player {
   wantsRematch?: boolean; // 是否想要再玩一次
 }
 
+export type GamePhase = 'waiting' | 'playing' | 'finished';
+
 export interface CardPlay {
   playerId: string;
   cards: Card[];
   type: CardType;
   timestamp: number;
 }
-
-export type GamePhase = 'waiting' | 'playing' | 'finished';
 
 export class Game {
   public id: string;
@@ -30,9 +30,14 @@ export class Game {
   public lastWinner: string | null = null; // 上一局的获胜者
   public createdAt: number;
   public deck: Card[] = []; // 剩余牌堆
+  public discardPile: Card[] = []; // 已出牌堆，用于重新洗牌
+  public maxPlayers: number; // 房间最大人数 (2-6)
+  public consecutivePasses: number = 0; // 连续过牌计数
+  public lastPlayerId: string | null = null; // 最后出牌的玩家ID
 
-  constructor(gameId: string) {
+  constructor(gameId: string, maxPlayers: number = 2) {
     this.id = gameId;
+    this.maxPlayers = Math.min(Math.max(maxPlayers, 2), 6); // 确保在2-6之间
     this.createdAt = Date.now();
   }
 
@@ -43,8 +48,8 @@ export class Game {
       return false;
     }
 
-    // 检查房间是否已满 (最多2人)
-    if (this.players.length >= 2) {
+    // 检查房间是否已满
+    if (this.players.length >= this.maxPlayers) {
       return false;
     }
 
@@ -81,18 +86,20 @@ export class Game {
 
   // 开始游戏 - 发牌
   startGame(): boolean {
-    if (this.players.length !== 2) return false;
+    if (this.players.length < 2) return false;
     if (this.phase !== 'waiting') return false;
 
     // 创建并洗牌
     this.deck = CardUtils.shuffleDeck(CardUtils.createDeck());
+    this.discardPile = [];
     
     // 随机决定首出玩家
-    this.currentPlayerIndex = Math.floor(Math.random() * 2);
+    this.currentPlayerIndex = Math.floor(Math.random() * this.players.length);
     
     // 每个玩家先发5张牌
-    this.players[0].cards = this.deck.splice(0, 5);
-    this.players[1].cards = this.deck.splice(0, 5);
+    for (let i = 0; i < this.players.length; i++) {
+      this.players[i].cards = this.deck.splice(0, 5);
+    }
     
     // 首出玩家额外获得1张牌
     this.players[this.currentPlayerIndex].cards.push(this.deck.splice(0, 1)[0]);
@@ -104,6 +111,8 @@ export class Game {
 
     this.phase = 'playing';
     this.lastPlay = null;
+    this.consecutivePasses = 0;
+    this.lastPlayerId = null;
 
     return true;
   }
@@ -144,12 +153,19 @@ export class Game {
     // 执行出牌
     this.removeCardsFromPlayer(player, cards);
     
+    // 将出的牌加入弃牌堆
+    this.discardPile.push(...cards);
+    
     this.lastPlay = {
       playerId,
       cards,
       type: cardType,
       timestamp: Date.now()
     };
+
+    // 更新多人游戏状态
+    this.lastPlayerId = playerId;
+    this.consecutivePasses = 0; // 重置连续过牌计数
 
     // 检查是否获胜
     if (player.cards.length === 0) {
@@ -178,26 +194,51 @@ export class Game {
       return { success: false, error: '首出不能过牌' };
     }
 
+    // 增加连续过牌计数
+    this.consecutivePasses++;
+
     // 切换到下一个玩家
     this.nextPlayer();
 
     // 检查是否所有其他玩家都过牌了
-    // 在两人游戏中，一方过牌就轮到对方重新出牌
     if (this.isNewRound()) {
       this.lastPlay = null; // 清空上次出牌，获得新的出牌权
+      this.consecutivePasses = 0; // 重置过牌计数
       
       // 获得新出牌权的玩家摸一张牌
-      if (this.deck.length > 0) {
-        const currentPlayer = this.getCurrentPlayer();
-        if (currentPlayer) {
-          const drawnCard = this.deck.splice(0, 1)[0];
-          currentPlayer.cards.push(drawnCard);
-          currentPlayer.cards = CardUtils.sortCards(currentPlayer.cards);
-        }
-      }
+      this.drawCardForCurrentPlayer();
     }
 
     return { success: true };
+  }
+
+  // 为当前玩家摸牌（包含牌堆耗尽时的重新洗牌逻辑）
+  private drawCardForCurrentPlayer(): void {
+    const currentPlayer = this.getCurrentPlayer();
+    if (!currentPlayer) return;
+
+    // 如果牌堆为空，重新洗牌
+    if (this.deck.length === 0 && this.discardPile.length > 0) {
+      // 保留最后一次出牌不参与洗牌
+      const lastPlayCards = this.lastPlay ? [...this.lastPlay.cards] : [];
+      const cardsToShuffle = this.discardPile.filter(card => 
+        !lastPlayCards.some(lastCard => lastCard.id === card.id)
+      );
+      
+      if (cardsToShuffle.length > 0) {
+        this.deck = CardUtils.shuffleDeck(cardsToShuffle);
+        this.discardPile = lastPlayCards; // 只保留最后出的牌
+        console.log(`牌堆重新洗牌，新牌堆: ${this.deck.length}张，弃牌堆: ${this.discardPile.length}张`);
+      }
+    }
+
+    // 摸牌
+    if (this.deck.length > 0) {
+      const drawnCard = this.deck.splice(0, 1)[0];
+      currentPlayer.cards.push(drawnCard);
+      currentPlayer.cards = CardUtils.sortCards(currentPlayer.cards);
+      console.log(`${currentPlayer.name} 摸了一张牌，剩余手牌: ${currentPlayer.cards.length}张`);
+    }
   }
 
   // 验证出牌是否合法
@@ -326,8 +367,8 @@ export class Game {
 
   // 检查是否开始新一轮 (所有其他玩家都过牌)
   private isNewRound(): boolean {
-    // 在两人游戏中，对方过牌就意味着新一轮开始
-    return true;
+    // 如果连续过牌次数等于除了最后出牌者外的所有玩家数，则开始新轮次
+    return this.consecutivePasses >= this.players.length - 1;
   }
 
   // 获取当前玩家
@@ -358,7 +399,10 @@ export class Game {
       winner: this.winner,
       lastWinner: this.lastWinner,
       createdAt: this.createdAt,
-      deckCount: this.deck.length // 剩余牌堆数量
+      deckCount: this.deck.length, // 剩余牌堆数量
+      discardPileCount: this.discardPile.length, // 已出牌堆数量
+      consecutivePasses: this.consecutivePasses, // 连续过牌次数
+      lastPlayerId: this.lastPlayerId
     };
   }
 
@@ -372,6 +416,9 @@ export class Game {
     this.winner = null;
     this.lastPlay = null;
     this.deck = [];
+    this.discardPile = [];
+    this.consecutivePasses = 0;
+    this.lastPlayerId = null;
     
     // 重置所有玩家状态
     this.players.forEach(player => {

@@ -16,7 +16,7 @@ export interface UseSocketReturn {
   playerId: string;
   error: string;
   isJoining: boolean;
-  joinGame: (playerName: string) => void;
+  joinGame: (playerName: string, maxPlayers?: number) => void;
   playCards: (cards: Card[], type: CardType) => void;
   pass: () => void;
   requestRematch: () => void;
@@ -122,7 +122,7 @@ export const useSocket = (): UseSocketReturn => {
   }, []);
 
   // 加入游戏
-  const joinGame = (playerName: string) => {
+  const joinGame = (playerName: string, maxPlayers: number = 2) => {
     if (!socket || !isConnected) {
       console.error('无法加入游戏: socket =', socket, 'isConnected =', isConnected);
       setError('未连接到服务器');
@@ -134,10 +134,10 @@ export const useSocket = (): UseSocketReturn => {
       return;
     }
 
-    console.log('尝试加入游戏:', playerName, 'socketId:', socket.id);
+    console.log('尝试加入游戏:', playerName, 'maxPlayers:', maxPlayers, 'socketId:', socket.id);
     setIsJoining(true);
     setError('');
-    socket.emit('join-game', { playerName });
+    socket.emit('join-game', { playerName, maxPlayers });
   };
 
   // 出牌
