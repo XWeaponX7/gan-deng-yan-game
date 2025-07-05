@@ -557,7 +557,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
           {/* 多人玩家列表 */}
           <div className="space-y-2">
             {otherPlayers.length > 0 ? (
-              otherPlayers.map((player, index) => {
+              otherPlayers.map((player) => {
                 const isCurrentTurn = currentTurnPlayer?.id === player.id;
                 return (
                   <div

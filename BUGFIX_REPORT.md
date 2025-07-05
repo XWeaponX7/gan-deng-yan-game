@@ -761,3 +761,106 @@ const [showShortcutsInfo, setShowShortcutsInfo] = useState(false);
 这些改进让游戏界面更加现代、美观、专业！🎨✨
 
 ---
+
+# 干瞪眼游戏 Bug 修复记录
+
+本文档记录了游戏开发过程中遇到的问题、解决方案和预防措施。
+
+## 目录
+1. [前后端一致性问题](#前后端一致性问题)
+2. [部署构建失败问题](#部署构建失败问题)
+
+---
+
+## 前后端一致性问题
+
+### 问题描述
+**时间**: 2024年1月 
+**问题**: 前端显示"无法出牌"，后端日志显示"牌型不匹配"错误
+
+### 根本原因
+前后端使用不同的牌型识别逻辑：
+- 前端：使用 `ClientCardUtils.identifyCardType()`
+- 后端：使用 `CardUtils.identifyCardType()`
+
+两个函数的实现存在差异，导致同一组牌在前后端被识别为不同的牌型。
+
+### 解决方案
+1. **统一牌型识别逻辑**：确保前后端使用相同的算法
+2. **添加详细日志**：在关键节点记录牌型识别结果
+3. **完善错误处理**：提供更清晰的错误信息给用户
+
+### 修复文件
+- `client/src/utils/cardUtils.ts`
+- `server/src/models/Card.ts`
+- `client/src/components/GameBoard.tsx`
+- `server/src/models/Game.ts`
+
+### 预防措施
+1. **代码复用**：考虑将核心逻辑抽取为共享库
+2. **单元测试**：为牌型识别函数编写全面的测试用例
+3. **集成测试**：确保前后端在实际游戏场景中的一致性
+4. **文档规范**：明确定义所有牌型的识别规则
+
+---
+
+## 部署构建失败问题
+
+### 问题描述
+**时间**: 2024年1月
+**问题**: Railway部署失败，TypeScript编译错误
+**错误信息**: `src/components/GameBoard.tsx(560,41): error TS6133: 'index' is declared but its value is never read.`
+
+### 根本原因
+在多人模式重构过程中，`GameBoard.tsx` 的 `otherPlayers.map((player, index) => {` 中声明了 `index` 参数但没有使用，导致TypeScript严格模式下的编译错误。
+
+### 解决方案
+1. **移除未使用的变量**：将 `otherPlayers.map((player, index) => {` 改为 `otherPlayers.map((player) => {`
+2. **本地构建测试**：在推送前先运行 `npm run build` 验证构建成功
+3. **TypeScript配置优化**：确保本地开发环境与部署环境的TypeScript配置一致
+
+### 修复文件
+- `client/src/components/GameBoard.tsx` (第560行)
+
+### 预防措施
+1. **预提交钩子**：设置 git pre-commit hook 运行 `npm run build` 和 `npm run tsc`
+2. **CI/CD流程**：在GitHub Actions中添加构建检查步骤
+3. **代码审查**：重构时仔细检查是否有未使用的变量或导入
+4. **开发规范**：
+   - 使用 ESLint 规则检查未使用的变量
+   - 定期运行 `npm run tsc` 检查类型错误
+   - 推送前必须确保本地构建成功
+
+### 技术细节
+- **TypeScript严格模式**：部署环境启用了更严格的类型检查
+- **构建流程**：`npm run build` = `npm run tsc && vite build`
+- **错误类型**：TS6133 - 声明但未使用的变量
+
+### 相关命令
+```bash
+# 检查TypeScript错误
+npm run tsc
+
+# 完整构建测试
+npm run build
+
+# 检查未使用的变量
+npx eslint src --ext .ts,.tsx
+```
+
+---
+
+## 总结
+
+### 开发最佳实践
+1. **本地验证**：推送前必须确保本地构建和测试通过
+2. **渐进式开发**：大型重构分多个小步骤进行
+3. **文档记录**：及时记录问题和解决方案
+4. **自动化检查**：使用工具自动发现潜在问题
+
+### 质量保证流程
+1. 代码编写 → 本地测试 → TypeScript检查 → 构建测试 → 提交推送
+2. 设置适当的 git hooks 和 CI/CD 流程
+3. 定期进行代码审查和重构
+
+通过这些措施，可以有效避免类似问题的再次发生。
