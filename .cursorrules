@@ -1,0 +1,581 @@
+# 干瞪眼游戏项目开发规范
+
+## 🎯 项目概述
+干瞪眼是一个基于 React + TypeScript + Socket.io 的实时多人卡牌游戏，采用前后端分离架构。
+
+## 📋 项目管理规范
+
+### 文件组织结构
+```
+gan_deng_yan/
+├── client/                 # React前端 (端口5173)
+│   ├── src/
+│   │   ├── components/     # React组件
+│   │   │   ├── GameBoard.tsx   # 游戏主界面
+│   │   │   ├── TurnTimer.tsx   # 轮次计时器
+│   │   │   └── VictoryEffect.tsx # 胜利特效
+│   │   ├── hooks/         # 自定义Hooks
+│   │   │   └── useSocket.ts    # Socket连接管理
+│   │   ├── utils/         # 工具函数
+│   │   │   ├── cardUtils.ts    # 卡牌工具函数
+│   │   │   └── uiUtils.ts      # UI工具函数
+│   │   ├── types/         # TypeScript类型定义
+│   │   │   └── game.ts         # 游戏相关类型
+│   │   ├── App.tsx        # 主应用组件
+│   │   ├── main.tsx       # 应用入口
+│   │   └── App.css        # 全局样式
+│   ├── package.json
+│   ├── vite.config.ts
+│   └── tsconfig.json
+├── server/                 # Node.js后端 (端口3001)
+│   ├── src/
+│   │   ├── models/        # 数据模型
+│   │   │   ├── Card.ts         # 卡牌模型
+│   │   │   └── Game.ts         # 游戏模型
+│   │   ├── server.ts      # 服务器入口
+│   │   └── socket/        # WebSocket处理 (内嵌在server.ts中)
+│   ├── package.json
+│   └── tsconfig.json
+├── docs/                   # 项目文档
+│   ├── gan_deng_yan_rules.md      # 游戏规则
+│   ├── gan_deng_yan_dev_doc.md    # 开发文档
+│   ├── gan_deng_yan_ui_ux_roadmap.md # UI/UX路线图
+│   ├── GAN_DENG_YAN_MULTIPLAYER_ROADMAP.md # 多人模式路线图
+│   ├── BUGFIX_REPORT.md     # Bug修复报告
+│   ├── PHASE1_ENHANCEMENTS.md # Phase 1 增强报告
+│   ├── PHASE2_ENHANCEMENTS.md # Phase 2 增强报告
+│   └── PHASE3_ENHANCEMENTS.md # Phase 3 增强报告
+├── package.json           # 根目录配置
+├── railway.toml          # Railway部署配置
+├── .gitignore           # Git忽略文件
+├── .cursorrules         # 开发规范
+├── README.md            # 项目说明
+└── LICENSE              # 开源许可证
+```
+
+### 命名规范
+- **文件命名**: 使用 PascalCase (组件) 或 camelCase (工具函数)
+- **组件命名**: PascalCase，如 `GameBoard.tsx`
+- **函数命名**: camelCase，如 `handleCardClick`
+- **常量命名**: UPPER_SNAKE_CASE，如 `MAX_PLAYERS`
+- **类型命名**: PascalCase，如 `GameState`
+
+### 版本控制
+- 提交信息格式: `type(scope): description`
+- 类型: feat, fix, docs, style, refactor, test, chore
+- 示例: `feat(game): add wildcard straight support`
+
+### 提交规范
+- **ALWAYS** 使用中文描述提交信息，格式：`feat/fix/docs: 功能描述`
+- **ALWAYS** 包含详细的功能点列表
+- **ALWAYS** 提交前运行 `npm run build` 确保构建成功
+- **ALWAYS** 提交信息包含：主要功能、修复问题、更新内容
+- **ALWAYS** 在提交前确认没有遗留的临时文件或调试代码
+- **ALWAYS** 在提交前在相关文档的做合理的更新
+
+### Git提交标准流程
+- **WHEN** 用户说"commit到github"或类似表述 → **MUST** 执行完整提交流程：
+  1. **检查工作目录** → 确认在 `/gan_deng_yan` 目录
+  2. **构建验证** → 运行 `npm run build` 确保无错误
+  3. **文档更新** → 检查并更新相关docs文件的完成状态
+  4. **代码检查** → 运行 `git status` 查看变更文件
+  5. **暂存文件** → `git add .` 添加所有变更
+  6. **规范提交** → 使用标准commit格式和详细描述
+  7. **推送代码** → `git push origin main`
+
+## 🛡️ 错误预防规则
+
+### TypeScript 严格模式
+- 启用所有严格检查选项
+- 禁止使用 `any` 类型，必须明确类型定义
+- 使用泛型提高代码复用性
+- 所有函数必须有明确的返回类型
+
+### 前后端一致性检查
+- 牌型识别逻辑必须前后端完全一致
+- 使用共享的类型定义文件
+- 定期运行一致性测试
+- 任何牌型逻辑修改必须同时更新前后端
+- **ALWAYS** 修改牌型逻辑时同时更新 `client/src/utils/cardUtils.ts` 和 `server/src/models/Card.ts`
+- **ALWAYS** 在修改后测试前后端牌型识别结果是否一致
+- **WHEN** 发现前后端不一致 → **MUST** 立即修复并记录到 `docs/BUGFIX_REPORT.md`
+
+### 运行时错误预防
+```typescript
+// ✅ 正确的错误处理
+const handleCardClick = (card: Card) => {
+  if (!card || !gameState) {
+    console.warn('Invalid card or game state');
+    return;
+  }
+  // 处理逻辑
+};
+
+// ❌ 避免直接访问可能为空的属性
+const handleCardClick = (card: Card) => {
+  gameState.players[0].cards.push(card); // 可能出错
+};
+```
+
+### 网络错误处理
+- WebSocket 连接断开自动重连
+- 请求超时处理
+- 优雅的错误提示
+- 离线状态检测
+
+### 错误记录规则
+- **ALWAYS** 将新发现的重要Bug添加到 `docs/BUGFIX_REPORT.md`
+- **WHEN** 同类错误出现3次以上 → **MUST** 添加预防规则到 `.cursorrules`
+- **ALWAYS** 在错误修复后考虑是否需要添加预防规则
+- **ALWAYS** 记录错误的具体场景、复现步骤和解决方案
+- **ALWAYS** 更新相关文档中的已知问题列表
+
+## 🎨 UI/UX 设计规范
+
+### 设计原则
+1. **移动优先**: 所有设计首先考虑移动端体验
+2. **一致性**: 统一的视觉语言和交互模式
+3. **可访问性**: 支持键盘导航和屏幕阅读器
+4. **性能优先**: 流畅的60fps动画体验
+
+### 颜色系统
+```css
+/* 主色调 */
+--primary-blue: #3B82F6;
+--primary-purple: #8B5CF6;
+--success-green: #10B981;
+--warning-orange: #F59E0B;
+--danger-red: #EF4444;
+
+/* 背景渐变 */
+--gradient-primary: linear-gradient(-45deg, #90caf9, #ce93d8, #a5d6a7, #ffcc02);
+--gradient-glass: rgba(0, 0, 0, 0.55);
+
+/* 牌型颜色编码 */
+--card-single: #3B82F6;    /* 蓝色 - 单张 */
+--card-pair: #3B82F6;      /* 蓝色 - 对子 */
+--card-straight: #10B981;  /* 绿色 - 顺子 */
+--card-triple: #F59E0B;    /* 橙色 - 三张炸弹 */
+--card-quadruple: #EF4444; /* 红色 - 四张炸弹 */
+--card-joker-bomb: #8B5CF6; /* 紫色 - 王炸 */
+```
+
+### 组件设计规范
+- **卡牌组件**: 3.5rem × 5rem，圆角12px，3D效果
+- **按钮组件**: 统一使用 `btn-enhanced` 类，支持ripple效果
+- **面板组件**: 毛玻璃效果，圆角16px，backdrop-blur
+- **动画时长**: 快速反馈80ms，标准动画300ms，复杂动画800ms
+- **特殊牌样式**: 橙色边框 + 星星标记（2、大小王）
+- **炸弹效果**: 脉冲动画，红色渐变背景
+
+### 响应式断点
+```css
+/* 移动端: < 768px */
+/* 平板: 768px - 1024px */
+/* 桌面: > 1024px */
+/* 大屏: > 1920px */
+```
+
+### 动画规范
+- 使用 CSS transform 和 opacity 实现硬件加速
+- 缓动函数: `cubic-bezier(0.4, 0, 0.2, 1)`
+- 避免同时触发过多动画
+- 提供 `prefers-reduced-motion` 支持
+
+## 🏗️ 代码结构规范
+
+### React 组件规范
+```typescript
+// ✅ 推荐的组件结构
+interface ComponentProps {
+  // 明确的类型定义
+}
+
+const Component: React.FC<ComponentProps> = ({ prop1, prop2 }) => {
+  // 1. Hooks
+  const [state, setState] = useState();
+  
+  // 2. 事件处理函数
+  const handleClick = useCallback(() => {
+    // 处理逻辑
+  }, []);
+  
+  // 3. 渲染函数
+  return (
+    <div>
+      {/* JSX */}
+    </div>
+  );
+};
+
+export default Component;
+```
+
+### 自定义 Hooks 规范
+```typescript
+// ✅ 推荐的 Hook 结构
+export const useGameLogic = (gameState: GameState) => {
+  // 状态管理
+  const [localState, setLocalState] = useState();
+  
+  // 副作用
+  useEffect(() => {
+    // 副作用逻辑
+  }, [gameState]);
+  
+  // 返回值和函数
+  return {
+    state: localState,
+    actions: {
+      // 操作方法
+    }
+  };
+};
+```
+
+### 工具函数规范
+```typescript
+// ✅ 纯函数，明确的输入输出
+export const calculateCardValue = (card: Card): number => {
+  // 实现逻辑
+  return value;
+};
+
+// ✅ 副作用函数，明确标注
+export const triggerAnimation = (element: HTMLElement): void => {
+  // DOM 操作
+};
+```
+
+### 类型定义规范
+```typescript
+// ✅ 明确的类型定义
+export interface GameState {
+  gameId: string;
+  players: Player[];
+  currentPlayerIndex: number;
+  lastPlay: CardPlay | null;
+  phase: 'waiting' | 'playing' | 'finished';
+  winner: string | null;
+  lastWinner?: string | null;
+  createdAt: number;
+  deckCount?: number;
+  discardPileCount?: number;
+  maxPlayers?: number;
+  consecutivePasses?: number;
+  lastPlayerId?: string | null;
+  turnStartTime?: number;
+  turnTimeLimit?: number;
+}
+
+// ✅ 使用枚举类型
+export enum CardType {
+  SINGLE = 'single',
+  PAIR = 'pair',
+  STRAIGHT = 'straight',
+  TRIPLE = 'triple',
+  QUADRUPLE = 'quadruple',
+  JOKER_BOMB = 'joker_bomb'
+}
+
+// ✅ 联合类型
+export type Suit = 'hearts' | 'diamonds' | 'clubs' | 'spades' | 'joker';
+export type Rank = '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | 'J' | 'Q' | 'K' | 'A' | '2' | 'small_joker' | 'big_joker';
+
+// ✅ 泛型类型
+export interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+}
+```
+
+## 🔄 开发工作流规范
+
+### 开发环境设置
+1. **Node.js**: 版本 18+ 
+2. **包管理器**: npm
+3. **编辑器**: VS Code + 推荐扩展
+4. **Git**: 使用 Git Flow 工作流
+
+### 开发命令
+```bash
+# 安装依赖
+npm run install:all
+
+# 开发模式
+npm run dev                    # 同时启动前后端
+npm run dev:client            # 仅启动前端 (端口5173)
+npm run dev:server            # 仅启动后端 (端口3001)
+
+# 构建
+npm run build                 # 构建前后端
+npm run build:client          # 仅构建前端
+npm run build:server          # 仅构建后端
+
+# 类型检查
+npm run tsc                   # 检查TypeScript类型
+
+# 代码检查
+npm run lint                  # ESLint检查
+
+# 生产启动
+npm start                     # 启动生产服务器
+```
+
+### 开发流程规范
+- **ALWAYS** 开发新功能前先运行 `npm run tsc` 确保无类型错误
+- **ALWAYS** 提交前运行 `npm run build` 确保构建成功
+- **ALWAYS** 修改动画效果后测试移动端兼容性
+- **WHEN** 添加新的牌型逻辑 → **MUST** 同时更新前后端代码
+- **WHEN** 修改UI组件 → **MUST** 测试响应式布局
+- **ALWAYS** 在 `client/src/App.css` 中添加新动画时考虑性能影响
+
+### 代码质量检查
+- **ESLint**: 强制执行代码规范
+- **Prettier**: 统一代码格式
+- **TypeScript**: 类型安全检查
+- **Husky**: Git hooks 自动检查
+
+### 测试规范
+```typescript
+// ✅ 单元测试示例
+describe('CardUtils', () => {
+  it('should identify single card correctly', () => {
+    const card = createCard('A', 'hearts');
+    const result = CardUtils.identifyCardType([card]);
+    expect(result).toBe(CardType.SINGLE);
+  });
+  
+  it('should identify wildcard pair correctly', () => {
+    const cards = [createCard('K', 'hearts'), createCard('small_joker', 'joker')];
+    const result = CardUtils.identifyCardType(cards);
+    expect(result).toBe(CardType.PAIR);
+  });
+  
+  it('should identify joker bomb correctly', () => {
+    const cards = [createCard('small_joker', 'joker'), createCard('big_joker', 'joker')];
+    const result = CardUtils.identifyCardType(cards);
+    expect(result).toBe(CardType.JOKER_BOMB);
+  });
+});
+```
+
+### 测试流程规范
+- **ALWAYS** 添加新的牌型逻辑时编写对应的测试用例
+- **ALWAYS** 测试百搭牌的各种组合情况
+- **ALWAYS** 测试前后端牌型识别的一致性
+- **WHEN** 修复Bug → **MUST** 添加回归测试用例
+- **ALWAYS** 测试动画效果在不同浏览器中的表现
+- **ALWAYS** 测试WebSocket连接断开重连功能
+
+### 性能优化规范
+- 使用 React.memo 优化组件重渲染
+- 使用 useCallback 和 useMemo 缓存函数和值
+- 避免在渲染函数中创建新对象
+- 使用 React.lazy 进行代码分割
+
+## 📊 动态更新机制
+
+### 状态管理
+```typescript
+// ✅ 使用 Context + useReducer 管理全局状态
+const GameContext = createContext<GameContextType | null>(null);
+
+const gameReducer = (state: GameState, action: GameAction): GameState => {
+  switch (action.type) {
+    case 'UPDATE_GAME_STATE':
+      return { ...state, ...action.payload };
+    // 其他 action
+  }
+};
+```
+
+### WebSocket 事件处理
+```typescript
+// ✅ 统一的事件处理模式
+const useSocketEvents = () => {
+  useEffect(() => {
+    socket.on('game-state', handleGameStateUpdate);
+    socket.on('error', handleError);
+    
+    return () => {
+      socket.off('game-state', handleGameStateUpdate);
+      socket.off('error', handleError);
+    };
+  }, []);
+};
+```
+
+### 错误边界
+```typescript
+// ✅ 错误边界组件
+class ErrorBoundary extends React.Component {
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('Game error:', error, errorInfo);
+    // 错误上报逻辑
+  }
+  
+  render() {
+    if (this.state.hasError) {
+      return <ErrorFallback />;
+    }
+    return this.props.children;
+  }
+}
+```
+
+## 🎮 游戏特定规范
+
+### 牌型识别规范
+- 所有牌型识别逻辑必须前后端一致（ClientCardUtils vs CardUtils）
+- 百搭牌逻辑需要特殊处理（大小王可替代任意牌）
+- 炸弹牌型优先级明确（四张 > 三张 > 王炸）
+- 顺子规则严格遵循（不含2，支持百搭顺子）
+- 特殊牌规则（2只能被大小王或炸弹压制）
+- 王炸优先识别（大王+小王优先识别为王炸而非百搭对子）
+
+### 动画系统规范
+```typescript
+// ✅ 动画工具函数规范
+export const triggerCardAnimation = (
+  element: HTMLElement,
+  animationType: 'select' | 'play' | 'deal' | 'flip' | 'victory'
+): void => {
+  // 动画逻辑
+  switch (animationType) {
+    case 'select':
+      element.classList.add('card-quick-select-instant');
+      setTimeout(() => element.classList.remove('card-quick-select-instant'), 60);
+      break;
+    case 'play':
+      element.classList.add('card-fly-out');
+      break;
+    case 'deal':
+      element.classList.add('card-dealing');
+      setTimeout(() => element.classList.remove('card-dealing'), 800);
+      break;
+    case 'flip':
+      element.classList.add('card-flip');
+      setTimeout(() => element.classList.remove('card-flip'), 600);
+      break;
+    case 'victory':
+      element.classList.add('victory-card');
+      break;
+  }
+};
+
+// ✅ 复杂动画组合
+export const triggerPlayCardCombo = (element: HTMLElement): void => {
+  triggerCardWobble(element);
+  setTimeout(() => createParticleExplosion(element, 15), 200);
+  setTimeout(() => triggerCardFlyToCenter(element), 400);
+};
+```
+
+### 多人游戏规范
+- 支持2-6人游戏（当前已实现2人，多人模式在路线图中）
+- 房间系统设计（已实现基础匹配）
+- 断线重连机制（WebSocket自动重连）
+- 观战模式支持（计划功能）
+- 轮次超时处理（已实现20秒超时）
+- 再玩一次功能（已实现）
+
+## 🔧 部署和运维规范
+
+### 环境配置
+```bash
+# 开发环境
+NODE_ENV=development
+VITE_SOCKET_URL=ws://localhost:3001
+
+# 生产环境
+NODE_ENV=production
+VITE_SOCKET_URL=wss://your-domain.com
+PORT=3001
+CLIENT_URL=https://your-app.railway.app
+```
+
+### Railway部署配置
+```toml
+[build]
+command = "npm run build"
+
+[deploy]
+startCommand = "npm start"
+healthcheckPath = "/health"
+healthcheckTimeout = 300
+
+[environments.production]
+NODE_ENV = "production"
+```
+
+### 构建优化
+- 代码分割和懒加载
+- 资源压缩和优化
+- CDN 加速
+- 缓存策略
+
+### 监控和日志
+- 错误监控和上报
+- 性能监控
+- 用户行为分析
+- 服务器日志管理
+
+## 📚 文档规范
+
+### 代码注释
+```typescript
+/**
+ * 识别卡牌类型
+ * @param cards - 要识别的卡牌数组
+ * @returns 卡牌类型，如果无法识别则返回null
+ * @example
+ * const type = identifyCardType([card1, card2]);
+ */
+export const identifyCardType = (cards: Card[]): CardType | null => {
+  // 实现逻辑
+};
+```
+
+### 文档更新
+- 每次重大功能更新必须更新文档
+- 使用 Markdown 格式
+- 包含示例和截图
+- 维护 API 文档
+- **ALWAYS** 新功能完成后更新 `README.md` 的功能列表
+- **ALWAYS** Bug修复后更新 `docs/BUGFIX_REPORT.md`
+- **ALWAYS** UI改进后更新 `docs/gan_deng_yan_ui_ux_roadmap.md`
+- **WHEN** 添加新牌型 → **MUST** 更新 `docs/gan_deng_yan_rules.md`
+- **ALWAYS** 阶段性完成后更新对应的 `docs/PHASE*_ENHANCEMENTS.md`
+
+## 🚀 持续改进
+
+### 代码审查
+- 所有代码必须经过审查
+- 重点关注性能和安全性
+- 确保代码可维护性
+- 遵循最佳实践
+
+### 性能监控
+- 定期进行性能测试
+- 监控关键指标
+- 优化瓶颈点
+- 用户反馈收集
+
+### 技术债务管理
+- 定期重构代码
+- 更新依赖版本
+- 修复已知问题
+- 改进架构设计
+- **ALWAYS** 定期检查 `docs/BUGFIX_REPORT.md` 中的已知问题
+- **WHEN** 发现代码重复 → **MUST** 考虑提取公共函数
+- **ALWAYS** 保持前后端类型定义的一致性
+- **ALWAYS** 定期更新依赖包版本
+- **WHEN** 性能问题出现 → **MUST** 优先优化动画和渲染性能
+
+---
+
+**最后更新**: 2025年7月
+**维护者**: XWeaponX
+**版本**: v1.0 

@@ -8,9 +8,17 @@
 gan_deng_yan/
 ├── client/          # React前端 (端口5173)
 ├── server/          # Node.js后端 (端口3001)
-├── gan_deng_yan_rules.md    # 游戏规则
-├── gan_deng_yan_dev_doc.md  # 开发文档
-└── README.md
+├── docs/            # 项目文档
+│   ├── gan_deng_yan_rules.md    # 游戏规则
+│   ├── gan_deng_yan_dev_doc.md  # 开发文档
+│   ├── gan_deng_yan_ui_ux_roadmap.md # UI/UX路线图
+│   ├── GAN_DENG_YAN_MULTIPLAYER_ROADMAP.md # 多人模式路线图
+│   ├── BUGFIX_REPORT.md     # Bug修复报告
+│   ├── PHASE1_ENHANCEMENTS.md # Phase 1 增强报告
+│   ├── PHASE2_ENHANCEMENTS.md # Phase 2 增强报告
+│   └── PHASE3_ENHANCEMENTS.md # Phase 3 增强报告
+├── README.md        # 项目说明
+└── LICENSE          # 开源许可证
 ```
 
 ## 技术栈
@@ -90,10 +98,10 @@ npm start
   - 卡牌tooltip提示
   - **超快速点击反馈** (80ms响应) ⚡
 - **完整游戏循环** 🔄：
-  - 智能牌型识别和验证
-  - 轮流出牌机制 + 摸牌规则
-  - 过牌功能
-  - 胜负判定
+- 智能牌型识别和验证
+- 轮流出牌机制 + 摸牌规则
+- 过牌功能
+- 胜负判定
   - **再玩一次功能** (含炫酷特效) ✨
 
 🚧 **计划功能** (Phase 3):

@@ -17,7 +17,7 @@ function App() {
     maxPlayers: number;
     gameId: string;
   } | null>(null);
-
+  
   const {
     gameState,
     playerId,
@@ -81,7 +81,7 @@ function App() {
   const handlePlayCards = (cards: any[]) => {
     const cardType = ClientCardUtils.identifyCardType(cards);
     if (cardType) {
-      playCards(cards, cardType);
+    playCards(cards, cardType);
     }
   };
 
@@ -224,14 +224,14 @@ function App() {
   // 游戏进行中，显示游戏界面
   return (
     <div className="App">
-      <GameBoard 
-        gameState={gameState}
-        playerId={playerId}
-        onPlayCards={handlePlayCards}
-        onPass={pass}
-        onRequestRematch={requestRematch}
+    <GameBoard 
+      gameState={gameState}
+      playerId={playerId}
+      onPlayCards={handlePlayCards}
+      onPass={pass}
+      onRequestRematch={requestRematch}
         turnTimeoutPlayerId={turnTimeoutPlayerId}
-      />
+    />
     </div>
   );
 }

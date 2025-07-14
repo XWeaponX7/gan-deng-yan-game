@@ -269,19 +269,19 @@ io.on('connection', (socket) => {
         return;
       }
 
-      // 广播游戏状态更新
-      game.players.forEach(player => {
-        io.to(player.id).emit('game-state', game.getGameState(player.id));
-      });
+              // 广播游戏状态更新
+        game.players.forEach(player => {
+          io.to(player.id).emit('game-state', game.getGameState(player.id));
+        });
 
       // 重新设置计时器
       setupTurnTimer(game);
 
-      // 通知下一个玩家
-      const currentPlayer = game.getCurrentPlayer();
-      if (currentPlayer) {
-        io.to(currentPlayer.id).emit('your-turn', { playerId: currentPlayer.id });
-      }
+        // 通知下一个玩家
+        const currentPlayer = game.getCurrentPlayer();
+        if (currentPlayer) {
+          io.to(currentPlayer.id).emit('your-turn', { playerId: currentPlayer.id });
+        }
 
     } catch (error) {
       console.error('过牌错误:', error);

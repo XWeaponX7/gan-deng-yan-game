@@ -330,7 +330,7 @@ export class CardUtils {
     
     for (let start = minPossibleStart; start <= maxPossibleStart && start >= 3; start++) {
       const end = start + totalLength - 1;
-      
+    
       // 检查这个范围是否有效（不能超过A=14，除非包含2但2不能在顺子中）
       if (end > 14) continue;
       
