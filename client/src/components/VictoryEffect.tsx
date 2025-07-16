@@ -1,7 +1,7 @@
 // client/src/components/VictoryEffect.tsx
 // 胜利特效组件 - Phase 2 视觉特效
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 interface VictoryEffectProps {
   isVisible: boolean;

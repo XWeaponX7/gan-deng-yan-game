@@ -19,6 +19,8 @@ const TurnTimer: React.FC<TurnTimerProps> = ({
   const [remainingTime, setRemainingTime] = useState(turnTimeLimit);
 
   useEffect(() => {
+    // TurnTimer props debug info available in development
+    
     if (!turnStartTime) {
       setRemainingTime(turnTimeLimit);
       return;

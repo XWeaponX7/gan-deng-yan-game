@@ -1,6 +1,8 @@
 // client/src/utils/uiUtils.ts
 // UI工具函数 - Phase 1 增强功能
 
+import React from 'react';
+
 /**
  * 为按钮添加ripple效果
  * @param event 鼠标点击事件
@@ -31,16 +33,16 @@ export const createRippleEffect = (event: React.MouseEvent<HTMLButtonElement>) =
 };
 
 /**
- * 为卡牌添加牌型识别动画
+ * 为卡牌添加牌型识别动画 - 优化版
  * @param cardElement 卡牌DOM元素
  */
 export const addCardTypeGlow = (cardElement: HTMLElement) => {
   cardElement.classList.add('card-type-glow');
   
-  // 动画结束后移除类
+  // 动画结束后移除类 - 配合缩短的动画时间
   setTimeout(() => {
     cardElement.classList.remove('card-type-glow');
-  }, 1500);
+  }, 400);
 };
 
 /**
@@ -216,17 +218,17 @@ export const addRandomCardEffect = (cardElement: HTMLElement) => {
    =================== */
 
 /**
- * 复杂出牌飞行动画
+ * 流畅出牌飞行动画 - 优化版
  * @param element 卡牌元素
  */
 export const triggerCardFlyToCenter = (element: HTMLElement): void => {
-  element.style.animation = 'cardFlyToCenter 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards';
+  element.style.animation = 'cardFlyToCenter 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards';
   
   // 动画结束后的清理
   setTimeout(() => {
     element.style.animation = '';
     element.style.transform = '';
-  }, 1500);
+  }, 1200);
 };
 
 /**
@@ -314,15 +316,15 @@ export const triggerQuickSelect = (element: HTMLElement): void => {
 };
 
 /**
- * 弹性缩放动画
+ * 弹性缩放动画 - 优化版
  * @param element 目标元素
  */
 export const triggerElasticScale = (element: HTMLElement): void => {
-  element.style.animation = 'elasticScale 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
+  element.style.animation = 'elasticScale 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
   
   setTimeout(() => {
     element.style.animation = '';
-  }, 600);
+  }, 400);
 };
 
 /**
@@ -355,22 +357,17 @@ export const triggerMagicAura = (element: HTMLElement, duration: number = 3000):
 };
 
 /**
- * 组合动画：出牌时的复杂特效 - 优化版
+ * 组合动画：出牌时的流畅特效 - 优化版
  * @param element 卡牌元素
  */
 export const triggerPlayCardCombo = (element: HTMLElement): void => {
-  // 先摆动
-  triggerCardWobble(element);
+  // 直接飞向中心，移除摆动动画
+  triggerCardFlyToCenter(element);
   
-  // 然后粒子爆炸 - 更快触发
+  // 粒子爆炸作为装饰效果，不阻塞主动画
   setTimeout(() => {
-    createParticleExplosion(element, 15);
-  }, 100);
-  
-  // 最后飞向中心 - 更快触发
-  setTimeout(() => {
-    triggerCardFlyToCenter(element);
-  }, 200);
+    createParticleExplosion(element, 10);
+  }, 150);
 };
 
 /**

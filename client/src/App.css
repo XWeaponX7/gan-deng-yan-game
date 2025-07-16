@@ -68,19 +68,32 @@ body {
   }
 }
 
-/* 发牌动画 - 从牌堆飞向手牌 */
+/* 发牌动画 - 从牌堆飞向手牌 - 增强版 */
 @keyframes dealCard {
   0% {
     transform: translateX(-200px) translateY(-100px) rotateY(180deg) scale(0.5);
     opacity: 0;
+    filter: blur(3px);
+  }
+  25% {
+    transform: translateX(-150px) translateY(-75px) rotateY(135deg) scale(0.6);
+    opacity: 0.4;
+    filter: blur(2px);
   }
   50% {
     transform: translateX(-100px) translateY(-50px) rotateY(90deg) scale(0.8);
     opacity: 0.7;
+    filter: blur(1px);
+  }
+  75% {
+    transform: translateX(-30px) translateY(-15px) rotateY(45deg) scale(0.95);
+    opacity: 0.9;
+    filter: blur(0.5px);
   }
   100% {
     transform: translateX(0) translateY(0) rotateY(0deg) scale(1);
     opacity: 1;
+    filter: blur(0px);
   }
 }
 
@@ -136,26 +149,22 @@ body {
    Phase 3 复杂动画系统
    =================== */
 
-/* 复杂出牌轨迹动画 */
+/* 流畅出牌轨迹动画 - 优化版 */
 @keyframes cardFlyToCenter {
   0% {
     transform: translateX(0) translateY(0) scale(1) rotateZ(0deg);
     opacity: 1;
   }
-  25% {
-    transform: translateX(-50px) translateY(-80px) scale(1.1) rotateZ(-10deg);
-    opacity: 0.9;
+  30% {
+    transform: translateX(-60px) translateY(-60px) scale(1.05) rotateZ(-5deg);
+    opacity: 0.95;
   }
-  50% {
-    transform: translateX(-100px) translateY(-120px) scale(1.15) rotateZ(-5deg);
-    opacity: 0.8;
-  }
-  75% {
-    transform: translateX(-150px) translateY(-100px) scale(1.05) rotateZ(5deg);
+  70% {
+    transform: translateX(-120px) translateY(-80px) scale(1.02) rotateZ(3deg);
     opacity: 0.9;
   }
   100% {
-    transform: translateX(-200px) translateY(-80px) scale(1) rotateZ(0deg);
+    transform: translateX(-180px) translateY(-60px) scale(1) rotateZ(0deg);
     opacity: 1;
   }
 }
@@ -222,15 +231,23 @@ body {
   }
 }
 
-/* 快速选择效果 - 极短的视觉反馈 */
+/* 快速选择效果 - 流畅触觉反馈 */
 @keyframes cardQuickSelect {
   0% {
     transform: translateY(0) scale(1);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   }
+  25% {
+    transform: translateY(-3px) scale(0.97);
+    box-shadow: 0 6px 15px rgba(59, 130, 246, 0.3);
+  }
   50% {
     transform: translateY(-8px) scale(1.05);
-    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.5);
+    box-shadow: 0 12px 30px rgba(59, 130, 246, 0.6);
+  }
+  75% {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4);
   }
   100% {
     transform: translateY(0) scale(1);
@@ -238,64 +255,72 @@ body {
   }
 }
 
-/* 即时快速选择动画 - 最快响应，与选中动画配合 */
+/* 即时快速选择动画 - 增强视觉反馈 */
 .card-quick-select-instant {
-  animation: instantSelectPulse 0.08s ease-out;
+  animation: instantSelectPulse 0.12s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   z-index: 15;
 }
 
 @keyframes instantSelectPulse {
   0% { 
-    transform: scale(1); 
+    transform: scale(1);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
   }
-  40% { 
-    transform: scale(0.95); 
-    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.25);
+  30% { 
+    transform: scale(0.95);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+  }
+  70% { 
+    transform: scale(1.03);
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
   }
   100% { 
-    transform: scale(1); 
-    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+    transform: scale(1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
   }
 }
 
-/* 增强的卡牌选中状态 - 立即响应设计，优化容器适配 */
+/* 专业卡牌选中状态 - 流畅响应，视觉吸引 */
 .card.selected {
-  animation: cardSelectInstant 0.1s ease-out; /* 从0.2s缩短到0.1s */
-  transform: translateY(-12px) scale(1.03); /* 更明显的抬升和缩放 */
+  transform: translateY(-12px) scale(1.03);
   box-shadow: 
-    0 12px 28px rgba(59, 130, 246, 0.35), /* 减少阴影范围避免超出容器 */
-    0 6px 16px rgba(59, 130, 246, 0.25),
-    0 0 0 2px rgba(59, 130, 246, 0.2); /* 减小外发光边框 */
+    0 12px 35px rgba(59, 130, 246, 0.5),
+    0 6px 20px rgba(59, 130, 246, 0.4),
+    0 0 0 3px #3B82F6,
+    inset 0 2px 0 rgba(255, 255, 255, 0.6);
   border: 2px solid #3B82F6;
-  background: #f0f8ff;
+  background: linear-gradient(135deg, #f0f8ff 0%, #e6f3ff 100%);
   color: #1e40af !important;
   z-index: 10;
-  position: relative; /* 确保在容器内部正确定位 */
+  position: relative;
+  transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* 弹性缓动 */
 }
 
-/* 卡牌选中动画 - 立即弹起版本 */
+/* 卡牌选中动画 - 流畅弹性版本 */
 @keyframes cardSelectInstant {
   0% { 
     transform: translateY(0) scale(1); 
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
   }
-  30% { 
-    transform: translateY(-10px) scale(1.02); 
-    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.2);
+  60% { 
+    transform: translateY(-15px) scale(1.05); 
+    box-shadow: 
+      0 15px 40px rgba(59, 130, 246, 0.4),
+      0 8px 25px rgba(59, 130, 246, 0.3),
+      0 0 0 3px rgba(59, 130, 246, 0.2);
   }
   100% { 
-    transform: translateY(-12px) scale(1.03); 
+    transform: translateY(-12px) scale(1.03);
     box-shadow: 
-      0 12px 28px rgba(59, 130, 246, 0.35),
-      0 6px 16px rgba(59, 130, 246, 0.25),
-      0 0 0 2px rgba(59, 130, 246, 0.2);
+      0 12px 35px rgba(59, 130, 246, 0.5),
+      0 6px 20px rgba(59, 130, 246, 0.4),
+      0 0 0 3px rgba(59, 130, 246, 0.3);
   }
 }
 
-/* 牌型识别发光效果 - 更快触发，与选中动画配合 */
+/* 牌型识别发光效果 - 禁用版：彻底移除动画 */
 .card.card-type-glow {
-  animation: cardTypeGlowInstant 0.8s ease-in-out; /* 缩短时间配合快速选中 */
+  /* animation: none; 完全禁用动画 */
   z-index: 12;
   position: relative;
 }
@@ -442,16 +467,70 @@ body {
   left: 100%;
 }
 
-/* 卡牌hover时的即时反馈 */
+/* 卡牌hover时的流畅反馈 - 增强视觉效果 */
 .card:hover {
-  transform: translateY(-5px) rotateX(3deg) scale(1.02); /* 减少抬升高度 */
+  transform: translateY(-6px) scale(1.02);
   box-shadow: 
-    0 8px 25px rgba(0, 0, 0, 0.15),
-    0 4px 12px rgba(0, 0, 0, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.7);
-  border-color: #9ca3af;
-  background: #ffffff;
-  transition: all 0.15s ease-out; /* 更快的hover响应 */
+    0 12px 30px rgba(0, 0, 0, 0.18),
+    0 6px 16px rgba(0, 0, 0, 0.12),
+    inset 0 2px 0 rgba(255, 255, 255, 0.8);
+  border-color: #60a5fa;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* 确保选中状态的hover效果 - 增强版 */
+.card.selected:hover {
+  transform: translateY(-15px) scale(1.05); /* 选中时hover效果 */
+  box-shadow: 
+    0 18px 45px rgba(59, 130, 246, 0.6),
+    0 8px 25px rgba(59, 130, 246, 0.5),
+    0 0 0 3px #3B82F6,
+    inset 0 3px 0 rgba(255, 255, 255, 0.8);
+}
+
+/* 平滑发牌动画 - 增强版 */
+.card-deal-smooth {
+  animation: dealCardSmooth 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+@keyframes dealCardSmooth {
+  0% {
+    opacity: 0;
+    transform: translateY(50px) scale(0.8) rotateX(-15deg);
+    filter: blur(2px);
+  }
+  30% {
+    opacity: 0.6;
+    transform: translateY(20px) scale(0.9) rotateX(-8deg);
+    filter: blur(1px);
+  }
+  70% {
+    opacity: 0.9;
+    transform: translateY(-5px) scale(1.02) rotateX(2deg);
+    filter: blur(0.5px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotateX(0deg);
+    filter: blur(0px);
+  }
+}
+
+/* 出牌动画 - 简单飞出效果 */
+.card-play-smooth {
+  animation: playCardSmooth 0.5s ease-out forwards;
+}
+
+@keyframes playCardSmooth {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-60px) scale(0.8);
+    opacity: 0.3;
+  }
 }
 
 /* 轮次切换动画 */
@@ -897,19 +976,27 @@ body {
   }
 }
 
-/* 弹性缩放动画 */
+/* 弹性缩放动画 - 增强版，用于双击反馈 */
 @keyframes elasticScale {
   0% { 
-    transform: scale(1); 
+    transform: scale(1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
   }
-  30% {
-    transform: scale(1.15);
+  25% {
+    transform: scale(0.95);
+    box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
   }
   50% {
+    transform: scale(1.15);
+    box-shadow: 0 12px 35px rgba(34, 197, 94, 0.6);
+  }
+  75% {
     transform: scale(1.05);
+    box-shadow: 0 8px 25px rgba(34, 197, 94, 0.4);
   }
   100% { 
     transform: scale(1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
   }
 }
 
@@ -956,19 +1043,16 @@ body {
   }
 }
 
-/* 牌型识别颜色渐变动画 - 立即响应版本 */
+/* 牌型识别颜色渐变动画 - 修复版：移除transform冲突 */
 @keyframes cardTypeGlowInstant {
   0% { 
     box-shadow: 0 0 5px rgba(59, 130, 246, 0.5);
-    transform: scale(1);
   }
-  40% { 
+  50% { 
     box-shadow: 0 0 15px rgba(59, 130, 246, 0.8), 0 0 25px rgba(59, 130, 246, 0.6);
-    transform: scale(1.02);
   }
   100% { 
     box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
-    transform: scale(1);
   }
 }
 
