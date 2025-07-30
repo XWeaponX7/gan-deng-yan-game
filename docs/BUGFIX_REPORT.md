@@ -2,6 +2,70 @@
 
 ## 最新修复 - 2025.06.28
 
+### 4. 动画系统冲突修复 - 已修复 ✅
+
+**问题描述**:
+- CSS动画定义重复，导致样式冲突
+- Transform属性相互覆盖，影响卡牌交互体验
+- 未使用的复杂动画函数造成代码冗余和性能问题
+- CSS语法错误导致构建失败
+
+**原因分析**:
+- `App.css`中存在重复的动画定义（cardDeal/dealCard, cardSelect/cardSelectInstant等）
+- 卡牌选中和hover状态的transform值不一致
+- `uiUtils.ts`中定义了大量未使用的复杂动画函数
+- 文件末尾有多余的右大括号
+
+**修复方案**:
+1. **统一动画系统**: 合并重复定义，保留最优版本
+2. **修复Transform冲突**: 优化卡牌选中和hover状态
+3. **清理代码**: 移除未使用的复杂动画函数
+4. **修复语法错误**: 删除多余的大括号
+
+**技术实现**:
+```css
+/* 修复前：重复的动画定义 */
+@keyframes cardDeal { /* 版本1 */ }
+@keyframes dealCard { /* 版本2 */ }
+
+/* 修复后：统一版本 */
+@keyframes dealCard {
+  0% { transform: translateX(-200px) translateY(-100px) rotateY(180deg) scale(0.5); }
+  /* ... 优化后的动画 */
+}
+
+/* 修复Transform冲突 */
+.card.selected {
+  transform: translateY(-12px) scale(1.03); /* 统一选中状态 */
+}
+
+.card.selected:hover {
+  transform: translateY(-15px) scale(1.05); /* 选中时的hover效果 */
+}
+```
+
+**清理的未使用函数**:
+- `triggerPlayCardCombo` - 复杂出牌组合动画
+- `createParticleExplosion` - 粒子爆炸效果
+- `triggerCardWobble` - 卡牌摆动效果
+- `triggerElasticScale` - 弹性缩放动画
+- `triggerGravityDrop` - 重力掉落效果
+- `triggerMagicAura` - 魔法光环效果
+
+**修复验证**:
+- ✅ 构建成功，无CSS语法错误
+- ✅ 发牌动画流畅运行
+- ✅ 卡牌选中状态正确显示
+- ✅ 出牌动画正常工作
+- ✅ 按钮反馈效果正常
+- ✅ 胜利特效正常播放
+
+**性能提升**:
+- 减少了同时运行的动画数量
+- 优化了动画持续时间和缓动函数
+- 移除了代码冗余，提高维护性
+- 确保动画有适当的清理机制
+
 ### 3. 百搭顺子逻辑错误 - 已修复 ✅
 
 **问题描述**:
