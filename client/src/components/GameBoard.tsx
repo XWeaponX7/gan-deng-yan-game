@@ -193,12 +193,13 @@ const GameBoard: React.FC<GameBoardProps> = ({
   const selectSameRankCards = useCallback((targetCard: Card) => {
     if (!currentPlayer?.cards) return;
     
-    const sameRankCards = currentPlayer.cards.filter(card => 
-      card.rank === targetCard.rank && !selectedCards.some(selected => selected.id === card.id)
-    );
-    
-    setSelectedCards(prev => [...prev, ...sameRankCards]);
-  }, [currentPlayer?.cards, selectedCards]);
+    setSelectedCards(prev => {
+      const sameRankCards = currentPlayer.cards!.filter(card => 
+        card.rank === targetCard.rank && !prev.some(selected => selected.id === card.id)
+      );
+      return [...prev, ...sameRankCards];
+    });
+  }, [currentPlayer?.cards]);
 
   // 键盘快捷键支持
   useEffect(() => {
@@ -346,12 +347,12 @@ const GameBoard: React.FC<GameBoardProps> = ({
       const isLightTheme = theme === 'light';
       
       if (card.suit === 'joker') {
-        return isLightTheme ? 'text-purple-700 font-extrabold' : 'text-purple-400 font-extrabold';
+        return isLightTheme ? 'text-purple-700 font-extrabold' : 'text-purple-300 font-extrabold';
       }
       if (card.suit === 'hearts' || card.suit === 'diamonds') {
-        return isLightTheme ? 'text-red-700 font-bold' : 'text-red-400 font-bold';
+        return isLightTheme ? 'text-red-700 font-bold' : 'text-red-300 font-bold';
       }
-      return isLightTheme ? 'text-gray-800 font-semibold' : 'text-gray-200 font-semibold';
+      return isLightTheme ? 'text-gray-800 font-semibold' : 'text-white font-semibold';
     };
 
     const isSpecial = ClientCardUtils.isSpecialCard(card);

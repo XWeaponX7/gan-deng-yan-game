@@ -27,7 +27,14 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     return 'dark';
   });
 
-  // 应用主题到document元素
+  // 初始化时立即设置主题，避免闪烁
+  useEffect(() => {
+    const initialTheme = theme;
+    document.documentElement.setAttribute('data-theme', initialTheme);
+    localStorage.setItem('gan-deng-yan-theme', initialTheme);
+  }, []); // 只在组件挂载时执行一次
+
+  // 主题变化时更新document元素
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('gan-deng-yan-theme', theme);

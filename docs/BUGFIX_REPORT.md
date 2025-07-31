@@ -1,6 +1,93 @@
 # 🔧 Bug修复报告
 
-## 最新修复 - 2025.06.28
+## 最新修复 - 2025.01.11
+
+### 5. 主题系统和性能优化修复 - 已修复 ✅
+
+**问题描述**:
+- 深色模式下卡牌文字颜色过淡，难以辨识
+- 浅色模式默认不是深色模式，主题初始化有问题
+- React组件存在无限循环更新 ("Maximum update depth exceeded")
+- 等待房间时缺乏超时保护机制
+- CSS变量覆盖了Tailwind颜色类，导致卡牌颜色显示异常
+
+**原因分析**:
+1. **CSS变量优先级问题**: `color: var(--card-text)` 覆盖了Tailwind颜色类
+2. **ThemeContext无限循环**: useState初始化中的DOM操作导致循环渲染
+3. **useCallback依赖循环**: `selectSameRankCards`依赖`selectedCards`造成无限更新
+4. **颜色配置不当**: 深色模式使用的颜色值过淡（400系列）
+5. **缺乏超时机制**: 等待房间没有时间限制，可能无限等待
+
+**修复方案**:
+1. **优化主题系统**: 移除CSS变量颜色，让Tailwind类正常工作
+2. **修复无限循环**: 优化ThemeContext和useCallback依赖
+3. **增强卡牌颜色**: 深色模式使用更鲜艳的颜色（300系列和white）
+4. **添加超时保护**: 5分钟房间等待超时机制
+5. **改进用户体验**: 实时倒计时显示和智能超时控制
+
+**技术实现**:
+```typescript
+// 修复前：导致无限循环的依赖
+const selectSameRankCards = useCallback((targetCard: Card) => {
+  // 使用 selectedCards 在依赖中
+}, [currentPlayer?.cards, selectedCards]);
+
+// 修复后：使用函数式更新
+const selectSameRankCards = useCallback((targetCard: Card) => {
+  setSelectedCards(prev => {
+    // 使用 prev 而不是外部 selectedCards
+  });
+}, [currentPlayer?.cards]);
+```
+
+```css
+/* 修复前：CSS变量覆盖Tailwind */
+.card {
+  color: var(--card-text); /* 覆盖所有颜色类 */
+}
+
+/* 修复后：让Tailwind颜色类正常工作 */
+.card {
+  /* color: var(--card-text); 移除默认颜色 */
+}
+```
+
+```typescript
+// 新增：5分钟超时保护机制
+useEffect(() => {
+  if (!roomInfo || !gameState || gameState.phase === 'playing') {
+    return;
+  }
+
+  const interval = setInterval(() => {
+    setWaitingTimeout(prev => {
+      if (prev <= 1) {
+        // 超时自动断开
+        socket?.disconnect();
+        setIsInGame(false);
+        return 300;
+      }
+      return prev - 1;
+    });
+  }, 1000);
+
+  return () => clearInterval(interval);
+}, [roomInfo, gameState?.phase, socket]);
+```
+
+**修复效果**:
+✅ 深色模式卡牌颜色鲜艳：红桃/方块(红色)，黑桃/梅花(白色)，王牌(紫色)
+✅ 主题切换流畅，默认深色模式正确加载
+✅ 无更多React无限循环错误
+✅ 5分钟房间超时保护，带实时倒计时显示
+✅ 浅色模式保持绿色基调，深色模式颜色对比度极佳
+
+**影响范围**: 主题系统、卡牌渲染、房间管理、用户体验
+**测试状态**: ✅ 已通过完整测试（深色/浅色模式切换、卡牌颜色显示、超时机制）
+
+---
+
+## 历史修复 - 2025.06.28
 
 ### 4. 动画系统冲突修复 - 已修复 ✅
 

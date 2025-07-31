@@ -22,7 +22,7 @@
   
   --card-bg: #ffffff;
   --card-border: #d1d5db;
-  --card-text: #1f2937;
+  --card-text: #ffffff;  /* 深色模式下使用白色文字 */
   --card-hover-border: #60a5fa;
   --card-selected-border: #3B82F6;
   
@@ -32,26 +32,121 @@
 }
 
 [data-theme="light"] {
-  /* 浅色主题 - 修复对比度 */
-  --bg-gradient-1: #dbeafe;  /* 更深的浅蓝 */
-  --bg-gradient-2: #e9d5ff;  /* 更深的浅紫 */
-  --bg-gradient-3: #dcfce7;  /* 更深的浅绿 */
-  --bg-gradient-4: #fef3c7;  /* 更深的浅橙 */
+  /* 浅色主题 - 自然清新设计系统（浅绿基底） */
+  /* 自然清新的渐变背景 - 仿照深色模式的丰富性 */
+  --bg-gradient-1: #a7f3d0;  /* 清新薄荷绿 */
+  --bg-gradient-2: #c7d2fe;  /* 淡雅紫色 */
+  --bg-gradient-3: #bfdbfe;  /* 清澈天空蓝 */
+  --bg-gradient-4: #fed7aa;  /* 温暖桃色 */
   
-  --glass-bg: rgba(255, 255, 255, 0.9);
-  --glass-border: rgba(0, 0, 0, 0.2);
-  --glass-hover-bg: rgba(255, 255, 255, 0.95);
-  --glass-hover-border: rgba(0, 0, 0, 0.3);
+  /* 自然色调毛玻璃效果 - 浅绿基底 */
+  --glass-bg: rgba(220, 252, 231, 0.85);  /* 浅绿色基底 */
+  --glass-border: rgba(34, 197, 94, 0.25);  /* 绿色边框 */
+  --glass-hover-bg: rgba(209, 250, 229, 0.9);  /* 悬停时更浅的绿 */
+  --glass-hover-border: rgba(34, 197, 94, 0.4);
   
-  --card-bg: #ffffff;
-  --card-border: #d1d5db;
-  --card-text: #1f2937;
-  --card-hover-border: #3b82f6;
-  --card-selected-border: #2563eb;
+  /* 清新卡牌设计 - 浅绿基调 */
+  --card-bg: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);  /* 浅绿渐变 */
+  --card-border: #86efac;  /* 绿色边框 */
+  --card-text: #14532d;  /* 深绿色文字 */
+  --card-hover-border: #22c55e;  /* 绿色悬停 */
+  --card-selected-border: #16a34a;  /* 深绿选中 */
   
-  --text-primary: #1f2937;
-  --text-secondary: rgba(31, 41, 55, 0.9);
-  --text-muted: rgba(31, 41, 55, 0.7);
+  /* 自然色文字系统 */
+  --text-primary: #14532d;  /* 深绿主文字 */
+  --text-secondary: rgba(20, 83, 45, 0.85);  /* 次要文字 */
+  --text-muted: rgba(20, 83, 45, 0.65);  /* 提示文字 */
+}
+
+/* ===================
+   浅色模式文字强制深色覆盖
+   =================== */
+/* 强制所有文字在浅色模式下为深绿色 */
+[data-theme="light"] .text-white {
+  color: #14532d !important; /* 深绿色 */
+}
+
+[data-theme="light"] .text-white\/90 {
+  color: rgba(20, 83, 45, 0.9) !important; /* 深绿色 */
+}
+
+[data-theme="light"] .text-white\/80 {
+  color: rgba(20, 83, 45, 0.8) !important; /* 深绿色 */
+}
+
+/* 渐变文字在浅色模式下的处理 - 绿色基调 */
+[data-theme="light"] .bg-gradient-to-r.from-white.to-blue-200.bg-clip-text.text-transparent {
+  background: linear-gradient(to right, #14532d, #22c55e) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  color: transparent !important;
+}
+
+/* 玻璃面板内的文字强制深绿色 */
+[data-theme="light"] .glass-panel .text-white,
+[data-theme="light"] .glass-panel .text-white\/90,
+[data-theme="light"] .glass-panel .text-white\/80 {
+  color: #14532d !important;
+}
+
+/* 游戏状态栏文字强制深绿色 */
+[data-theme="light"] .glass-panel h1,
+[data-theme="light"] .glass-panel h2,
+[data-theme="light"] .glass-panel h3,
+[data-theme="light"] .glass-panel p {
+  color: #14532d !important;
+}
+
+/* 等待界面标题和描述文字 */
+[data-theme="light"] h1.text-3xl.font-bold.text-center.text-white {
+  color: #14532d !important;
+}
+
+[data-theme="light"] p.text-white\/90.text-center {
+  color: rgba(20, 83, 45, 0.9) !important;
+}
+
+/* 额外强制覆盖 - 确保所有文字都是深绿色 */
+[data-theme="light"] span.text-white,
+[data-theme="light"] div.text-white,
+[data-theme="light"] span.text-white\/90,
+[data-theme="light"] div.text-white\/90,
+[data-theme="light"] span.text-white\/80,
+[data-theme="light"] div.text-white\/80 {
+  color: #14532d !important;
+}
+
+/* 特殊文字颜色类的覆盖 - 保持原有颜色但确保可见 */
+[data-theme="light"] .text-cyan-300 {
+  color: #0891b2 !important; /* 深青色 */
+}
+[data-theme="light"] .text-green-300,
+[data-theme="light"] .text-green-400 {
+  color: #15803d !important; /* 深绿色 */
+}
+[data-theme="light"] .text-orange-300 {
+  color: #ea580c !important; /* 深橙色 */
+}
+[data-theme="light"] .text-purple-300 {
+  color: #7c3aed !important; /* 深紫色 */
+}
+[data-theme="light"] .text-red-400 {
+  color: #dc2626 !important; /* 深红色 */
+}
+
+/* 按钮和链接文字确保对比 */
+[data-theme="light"] button.text-white,
+[data-theme="light"] a.text-white {
+  color: #ffffff !important; /* 按钮保持白色文字 */
+}
+
+/* 移除过于宽泛的选择器，避免意外影响 */
+
+/* 特殊情况：按钮内的文字保持白色 */
+[data-theme="light"] .btn-primary [class*="text-white"],
+[data-theme="light"] .btn-danger [class*="text-white"],
+[data-theme="light"] .btn-enhanced [class*="text-white"] {
+  color: #ffffff !important;
 }
 
 /* ===================
@@ -336,7 +431,7 @@ body {
   justify-content: center;
   font-weight: bold;
   font-size: 0.9rem;
-  color: var(--card-text);
+  /* color: var(--card-text); 移除默认颜色，让Tailwind类正常工作 */
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
@@ -350,13 +445,109 @@ body {
   transform-style: preserve-3d;
 }
 
-/* 浅色模式下的卡牌增强对比度 */
+/* 浅色模式下的自然清新卡牌设计 */
 [data-theme="light"] .card {
+  background: linear-gradient(135deg, 
+    #f0fdf4 0%, 
+    #ecfdf5 50%, 
+    #d1fae5 100%) !important;
+  border: 2px solid rgba(134, 239, 172, 0.6);
   box-shadow: 
-    0 4px 20px rgba(0, 0, 0, 0.2),
-    0 2px 12px rgba(0, 0, 0, 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  border: 2px solid #9ca3af;
+    0 8px 32px rgba(34, 197, 94, 0.2),
+    0 4px 16px rgba(16, 185, 129, 0.15),
+    inset 0 2px 0 rgba(167, 243, 208, 0.8),
+    inset 0 -2px 0 rgba(34, 197, 94, 0.1);
+  border-radius: 18px !important;
+  transform: translateZ(0); /* 硬件加速 */
+}
+
+/* 浅色模式下的卡牌悬停效果 - 自然绿色 */
+[data-theme="light"] .card:hover {
+  background: linear-gradient(135deg, 
+    #ecfdf5 0%, 
+    #d1fae5 50%, 
+    #bbf7d0 100%) !important;
+  border-color: rgba(34, 197, 94, 0.8) !important;
+  box-shadow: 
+    0 12px 40px rgba(34, 197, 94, 0.3),
+    0 6px 20px rgba(16, 185, 129, 0.2),
+    inset 0 2px 0 rgba(167, 243, 208, 1),
+    inset 0 -2px 0 rgba(34, 197, 94, 0.2);
+  transform: translateY(-8px) scale(1.02) translateZ(0) !important;
+}
+
+/* 浅色模式下的卡牌选中效果 - 深绿高亮 */
+[data-theme="light"] .card.selected {
+  background: linear-gradient(135deg, 
+    #bbf7d0 0%, 
+    #86efac 50%, 
+    #4ade80 100%) !important;
+  border-color: rgba(22, 163, 74, 0.9) !important;
+  box-shadow: 
+    0 16px 48px rgba(22, 163, 74, 0.4),
+    0 8px 24px rgba(34, 197, 94, 0.3),
+    inset 0 2px 0 rgba(187, 247, 208, 1),
+    inset 0 -2px 0 rgba(22, 163, 74, 0.3);
+  transform: translateY(-12px) scale(1.03) translateZ(0) !important;
+}
+
+/* 浅色模式下的特殊卡牌样式 - 金橙色调 */
+[data-theme="light"] .card.special {
+  background: linear-gradient(135deg, 
+    #fef3c7 0%, 
+    #fde68a 50%, 
+    #f59e0b 100%) !important;
+  border-color: rgba(217, 119, 6, 0.7) !important;
+  box-shadow: 
+    0 10px 36px rgba(245, 158, 11, 0.4),
+    0 5px 18px rgba(217, 119, 6, 0.3),
+    inset 0 2px 0 rgba(254, 243, 199, 0.9),
+    inset 0 -2px 0 rgba(217, 119, 6, 0.3);
+}
+
+/* 浅色模式下的炸弹卡牌样式 - 珊瑚红调 */
+[data-theme="light"] .card.bomb {
+  background: linear-gradient(135deg, 
+    #fef2f2 0%, 
+    #fecaca 50%, 
+    #f87171 100%) !important;
+  border-color: rgba(220, 38, 38, 0.7) !important;
+  box-shadow: 
+    0 10px 36px rgba(239, 68, 68, 0.4),
+    0 5px 18px rgba(220, 38, 38, 0.3),
+    inset 0 2px 0 rgba(254, 242, 242, 0.9),
+    inset 0 -2px 0 rgba(220, 38, 38, 0.3);
+  animation: light-bomb-pulse 2s ease-in-out infinite;
+}
+
+/* 浅色模式下的数字2卡牌样式 - 橙桃色调 */
+[data-theme="light"] .card.number-two {
+  background: linear-gradient(135deg, 
+    #fff7ed 0%, 
+    #fed7aa 50%, 
+    #fb923c 100%) !important;
+  border-color: rgba(234, 88, 12, 0.7) !important;
+  box-shadow: 
+    0 10px 36px rgba(249, 115, 22, 0.4),
+    0 5px 18px rgba(234, 88, 12, 0.3),
+    inset 0 2px 0 rgba(255, 247, 237, 0.9),
+    inset 0 -2px 0 rgba(234, 88, 12, 0.3);
+}
+
+/* 浅色模式炸弹动画 */
+@keyframes light-bomb-pulse {
+  0%, 100% { 
+    box-shadow: 
+      0 8px 32px rgba(239, 68, 68, 0.3),
+      0 4px 16px rgba(239, 68, 68, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  }
+  50% { 
+    box-shadow: 
+      0 12px 40px rgba(239, 68, 68, 0.5),
+      0 6px 20px rgba(239, 68, 68, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 1);
+  }
 }
 
 /* 卡牌光泽效果层 */
@@ -509,15 +700,12 @@ body {
   color: #7c3aed !important; /* 深紫色，确保可见 */
 }
 
-/* 浅色模式下所有卡牌文字强制深色 */
+/* 浅色模式下卡牌默认文字色 */
 [data-theme="light"] .card {
-  color: #1f2937 !important; /* 默认深色文字 */
+  color: #14532d !important; /* 默认深绿色文字 */
 }
 
-/* 额外保险：直接覆盖所有可能的文字颜色类 */
-[data-theme="light"] .card[class*="text-"] {
-  color: #1f2937 !important; /* 强制深色文字 */
-}
+/* 移除过于宽泛的选择器，使用更具体的覆盖 */
 
 /* 特殊处理红色花色 */
 [data-theme="light"] .card[class*="text-red"] {
@@ -530,28 +718,10 @@ body {
 }
 
 /* ===================
-   深色模式卡牌颜色确保
+   深色模式卡牌颜色保持原样
    =================== */
-/* 深色模式下确保卡牌文字颜色正确 */
-[data-theme="dark"] .card.text-red-400,
-[data-theme="dark"] .card.text-red-600 {
-  color: #f87171 !important; /* 亮红色 */
-}
-
-[data-theme="dark"] .card.text-gray-200,
-[data-theme="dark"] .card.text-gray-800 {
-  color: #e5e7eb !important; /* 亮灰色 */
-}
-
-[data-theme="dark"] .card.text-purple-400,
-[data-theme="dark"] .card.text-purple-700 {
-  color: #a78bfa !important; /* 亮紫色 */
-}
-
-/* 深色模式下所有卡牌文字确保可见 */
-[data-theme="dark"] .card {
-  color: #e5e7eb !important; /* 默认亮色文字 */
-}
+/* 深色模式下让卡牌使用原有的鲜艳颜色，不需要特殊覆盖 */
+/* 移除了过度的颜色覆盖，保持原有的Tailwind颜色系统 */
 
 /* ===================
    毛玻璃面板效果
@@ -568,13 +738,20 @@ body {
   color: var(--text-primary);
 }
 
-/* 浅色模式下的毛玻璃面板增强对比度 */
+/* 浅色模式下的自然清新毛玻璃面板 */
 [data-theme="light"] .glass-panel {
+  background: linear-gradient(135deg, 
+    rgba(220, 252, 231, 0.9) 0%, 
+    rgba(209, 250, 229, 0.85) 50%,
+    rgba(187, 247, 208, 0.8) 100%) !important;
+  backdrop-filter: blur(20px) saturate(150%);
+  border: 2px solid rgba(34, 197, 94, 0.3);
   box-shadow: 
-    0 10px 40px rgba(0, 0, 0, 0.15),
-    0 4px 20px rgba(0, 0, 0, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(0, 0, 0, 0.25);
+    0 12px 40px rgba(34, 197, 94, 0.15),
+    0 6px 20px rgba(16, 185, 129, 0.1),
+    inset 0 2px 0 rgba(167, 243, 208, 0.6),
+    inset 0 -2px 0 rgba(34, 197, 94, 0.15);
+  border-radius: 24px !important;
 }
 
 .glass-panel:hover {
@@ -645,12 +822,27 @@ body {
     0 2px 8px rgba(59, 130, 246, 0.2);
 }
 
-/* 浅色模式下的按钮增强对比度 */
+/* 浅色模式下的自然绿色按钮样式 */
 [data-theme="light"] .btn-primary {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%) !important;
   box-shadow: 
-    0 4px 20px rgba(59, 130, 246, 0.5),
-    0 2px 12px rgba(59, 130, 246, 0.3),
-    0 0 0 1px rgba(59, 130, 246, 0.2);
+    0 8px 32px rgba(34, 197, 94, 0.4),
+    0 4px 16px rgba(22, 163, 74, 0.3),
+    inset 0 2px 0 rgba(187, 247, 208, 0.4),
+    inset 0 -2px 0 rgba(21, 128, 61, 0.3);
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  border: none !important;
+}
+
+[data-theme="light"] .btn-primary:hover {
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%) !important;
+  box-shadow: 
+    0 12px 40px rgba(34, 197, 94, 0.5),
+    0 6px 20px rgba(22, 163, 74, 0.4),
+    inset 0 2px 0 rgba(187, 247, 208, 0.5),
+    inset 0 -2px 0 rgba(21, 128, 61, 0.4);
+  transform: translateY(-3px) scale(1.02) !important;
 }
 
 .btn-primary:hover {
@@ -989,25 +1181,36 @@ body {
 /* ===================
    浅色模式输入框增强
    =================== */
+/* 浅色模式下的自然绿色输入框样式 */
 [data-theme="light"] input {
-  background: rgba(255, 255, 255, 0.95) !important;
-  border: 2px solid rgba(0, 0, 0, 0.2) !important;
-  color: #1f2937 !important;
+  background: linear-gradient(135deg, 
+    rgba(240, 253, 244, 0.95) 0%, 
+    rgba(236, 253, 245, 0.9) 100%) !important;
+  border: 2px solid rgba(134, 239, 172, 0.4) !important;
+  color: #14532d !important;
   box-shadow: 
-    0 2px 8px rgba(0, 0, 0, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    0 4px 16px rgba(34, 197, 94, 0.1),
+    inset 0 2px 0 rgba(167, 243, 208, 0.6),
+    inset 0 -2px 0 rgba(134, 239, 172, 0.2);
+  border-radius: 14px !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 [data-theme="light"] input:focus {
-  border-color: #3b82f6 !important;
+  background: linear-gradient(135deg, 
+    rgba(240, 253, 244, 1) 0%, 
+    rgba(220, 252, 231, 0.95) 100%) !important;
+  border-color: rgba(34, 197, 94, 0.7) !important;
   box-shadow: 
-    0 0 0 3px rgba(59, 130, 246, 0.1),
-    0 2px 8px rgba(0, 0, 0, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    0 0 0 4px rgba(34, 197, 94, 0.15),
+    0 6px 20px rgba(34, 197, 94, 0.2),
+    inset 0 2px 0 rgba(187, 247, 208, 0.8),
+    inset 0 -2px 0 rgba(34, 197, 94, 0.2);
+  transform: translateY(-1px);
 }
 
 [data-theme="light"] input::placeholder {
-  color: rgba(31, 41, 55, 0.5) !important;
+  color: rgba(20, 83, 45, 0.5) !important;
 }
 
 /* ===================

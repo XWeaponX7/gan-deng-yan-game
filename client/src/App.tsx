@@ -19,6 +19,8 @@ function AppContent() {
     maxPlayers: number;
     gameId: string;
   } | null>(null);
+  const [waitingTimeout, setWaitingTimeout] = useState<number>(300); // 5分钟 = 300秒
+  const [isWaitingTimeoutActive, setIsWaitingTimeoutActive] = useState(false);
   
   const {
     gameState,
@@ -32,6 +34,44 @@ function AppContent() {
     socket,
     turnTimeoutPlayerId
   } = useSocket();
+
+  // 等待房间超时机制
+  useEffect(() => {
+    if (!roomInfo || !gameState || gameState.phase === 'playing' || gameState.phase === 'finished') {
+      setIsWaitingTimeoutActive(false);
+      return;
+    }
+
+    // 如果房间满了，停止超时计时
+    if (roomInfo.currentPlayers >= roomInfo.maxPlayers) {
+      setIsWaitingTimeoutActive(false);
+      return;
+    }
+
+    setIsWaitingTimeoutActive(true);
+    setWaitingTimeout(300); // 重置为5分钟
+
+    const interval = setInterval(() => {
+      setWaitingTimeout(prev => {
+        if (prev <= 1) {
+          // 超时了，断开连接并返回主页
+          if (socket) {
+            socket.disconnect();
+          }
+          setIsInGame(false);
+          setRoomInfo(null);
+          setIsWaitingTimeoutActive(false);
+          return 300;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      clearInterval(interval);
+      setIsWaitingTimeoutActive(false);
+    };
+  }, [roomInfo, gameState?.phase, socket]);
 
   // 监听玩家加入事件
   useEffect(() => {
@@ -222,11 +262,19 @@ function AppContent() {
               ))}
             </div>
 
-            <p className="text-white/60 text-sm">
-              {roomInfo.currentPlayers < roomInfo.maxPlayers
-                ? `还需要 ${roomInfo.maxPlayers - roomInfo.currentPlayers} 名玩家`
-                : '准备开始游戏...'}
-            </p>
+            <div className="space-y-2">
+              <p className="text-white/60 text-sm">
+                {roomInfo.currentPlayers < roomInfo.maxPlayers
+                  ? `还需要 ${roomInfo.maxPlayers - roomInfo.currentPlayers} 名玩家`
+                  : '准备开始游戏...'}
+              </p>
+              
+              {isWaitingTimeoutActive && (
+                <div className="text-yellow-300 text-xs">
+                  ⏰ 房间将在 {Math.floor(waitingTimeout / 60)}:{(waitingTimeout % 60).toString().padStart(2, '0')} 后自动关闭
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
