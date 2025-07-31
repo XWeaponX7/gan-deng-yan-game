@@ -6,9 +6,11 @@ import GameBoard from './components/GameBoard';
 import { useSocket } from './hooks/useSocket';
 import { ClientCardUtils } from './utils/cardUtils';
 import { createRippleEffect } from './utils/uiUtils';
+import { ThemeProvider } from './contexts/ThemeContext';
+import ThemeToggle from './components/ThemeToggle';
 import './App.css';
 
-function App() {
+function AppContent() {
   const [playerName, setPlayerName] = useState<string>('');
   const [isInGame, setIsInGame] = useState(false);
   const [maxPlayers, setMaxPlayers] = useState<number>(2);
@@ -88,7 +90,12 @@ function App() {
   // 如果还没有进入游戏，显示加入界面
   if (!isInGame) {
     return (
-      <div className="game-background min-h-screen flex items-center justify-center">
+      <div className="game-background min-h-screen flex items-center justify-center relative">
+        {/* 主题切换按钮 - 右上角 */}
+        <div className="absolute top-4 right-4 z-20">
+          <ThemeToggle size="md" />
+        </div>
+        
         <div className="glass-panel p-8 max-w-md w-full mx-4">
           <h1 className="text-3xl font-bold text-center text-white mb-6 drop-shadow-lg">
             🃏 干瞪眼
@@ -164,7 +171,12 @@ function App() {
   // 如果在游戏中但游戏还没开始，显示等待界面
   if (gameState?.phase === 'waiting' && roomInfo) {
     return (
-      <div className="game-background min-h-screen flex items-center justify-center">
+      <div className="game-background min-h-screen flex items-center justify-center relative">
+        {/* 主题切换按钮 - 右上角 */}
+        <div className="absolute top-4 right-4 z-20">
+          <ThemeToggle size="md" />
+        </div>
+        
         <div className="glass-panel p-8 max-w-md w-full mx-4">
           <h2 className="text-2xl font-bold text-center text-white mb-6 drop-shadow-lg">
             🎮 等待其他玩家
@@ -224,15 +236,24 @@ function App() {
   // 游戏进行中，显示游戏界面
   return (
     <div className="App">
-    <GameBoard 
-      gameState={gameState}
-      playerId={playerId}
-      onPlayCards={handlePlayCards}
-      onPass={pass}
-      onRequestRematch={requestRematch}
+      <GameBoard 
+        gameState={gameState}
+        playerId={playerId}
+        onPlayCards={handlePlayCards}
+        onPass={pass}
+        onRequestRematch={requestRematch}
         turnTimeoutPlayerId={turnTimeoutPlayerId}
-    />
+      />
     </div>
+  );
+}
+
+// 主App组件 - 包装ThemeProvider
+function App() {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
   );
 }
 

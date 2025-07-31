@@ -6,6 +6,8 @@ import { GameState, Card, CardType } from '../types/game';
 import { ClientCardUtils } from '../utils/cardUtils';
 import VictoryEffect from './VictoryEffect';
 import TurnTimer from './TurnTimer';
+import ThemeToggle from './ThemeToggle';
+import { useTheme } from '../contexts/ThemeContext';
 import { 
   createRippleEffect, 
   addTurnTransition, 
@@ -38,6 +40,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
   const gameStatusRef = useRef<HTMLDivElement>(null);
   const gameContainerRef = useRef<HTMLDivElement>(null);
   const [isFirstRender, setIsFirstRender] = useState(true);
+  const { theme } = useTheme(); // 获取当前主题
 
   // 提前定义所有hooks，避免条件渲染问题
   const currentPlayer = gameState?.players.find(p => p.id === playerId);
@@ -340,9 +343,15 @@ const GameBoard: React.FC<GameBoardProps> = ({
       }
     };
     const getCardColor = (card: Card) => {
-      if (card.suit === 'joker') return 'text-purple-700 font-extrabold';
-      if (card.suit === 'hearts' || card.suit === 'diamonds') return 'text-red-600 font-bold';
-      return 'text-gray-800 font-semibold';
+      const isLightTheme = theme === 'light';
+      
+      if (card.suit === 'joker') {
+        return isLightTheme ? 'text-purple-700 font-extrabold' : 'text-purple-400 font-extrabold';
+      }
+      if (card.suit === 'hearts' || card.suit === 'diamonds') {
+        return isLightTheme ? 'text-red-700 font-bold' : 'text-red-400 font-bold';
+      }
+      return isLightTheme ? 'text-gray-800 font-semibold' : 'text-gray-200 font-semibold';
     };
 
     const isSpecial = ClientCardUtils.isSpecialCard(card);
@@ -460,7 +469,10 @@ const GameBoard: React.FC<GameBoardProps> = ({
               </div>
             )}
 
-            <div className="text-right flex-shrink-0">
+            <div className="text-right flex-shrink-0 flex items-center gap-2">
+              {/* 主题切换按钮 */}
+              <ThemeToggle size="sm" className="hidden sm:block" />
+              
               <div 
                 ref={gameStatusRef}
                 className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border-2 transition-all text-xs sm:text-sm ${
@@ -691,6 +703,9 @@ const GameBoard: React.FC<GameBoardProps> = ({
                 <span className="relative z-10">❓</span>
                 <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
               </button>
+              
+              {/* 主题切换按钮 - 移动端显示 */}
+              <ThemeToggle size="sm" className="sm:hidden" title="切换主题" />
           </div>
 
           {selectedCards.length > 0 && (
